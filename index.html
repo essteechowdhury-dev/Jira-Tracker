@@ -6,33 +6,47 @@
   <title>Jira Status Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Hide scrollbar for the tabs to keep it clean */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
 <body class="h-full flex flex-col font-sans">
 
-  <header class="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between">
+  <header class="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between z-10 shadow-sm">
     <div class="flex items-center space-x-3">
       <div class="bg-amber-500 text-slate-950 p-2 rounded-lg font-bold text-sm">Jira</div>
       <h1 class="text-xl font-semibold tracking-tight text-slate-200">Tracker Workspace</h1>
     </div>
-    <button onclick="openNewTicketModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+    <button onclick="openNewTicketModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">
       + New Ticket
     </button>
   </header>
 
   <div class="flex-1 flex overflow-hidden">
     
-    <aside class="w-80 border-r border-slate-800 bg-slate-900/50 flex flex-col">
-      <div class="p-4 border-b border-slate-800">
-        <input type="text" id="searchBar" placeholder="Search Jiras..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-200">
+    <aside class="w-[26rem] border-r border-slate-800 bg-slate-900/50 flex flex-col">
+      
+      <div class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs no-scrollbar">
+        <button onclick="setTab('Ongoing', 'tab-ongoing')" id="tab-ongoing" class="px-4 py-3 font-semibold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap transition-colors">Ongoing</button>
+        <button onclick="setTab('Parked Dev', 'tab-parkeddev')" id="tab-parkeddev" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked Dev</button>
+        <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked</button>
+        <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Finished</button>
       </div>
+
+      <div class="p-4 border-b border-slate-800">
+        <input type="text" id="searchBar" placeholder="Search Jiras..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-200 shadow-inner">
+      </div>
+
       <div id="ticketList" class="flex-1 overflow-y-auto divide-y divide-slate-800/60">
         <p class="text-slate-500 text-sm p-4 text-center">Loading tickets...</p>
       </div>
     </aside>
 
-    <main id="workspace" class="flex-1 flex flex-col bg-slate-950 overflow-hidden">
-      <div class="flex-1 flex items-center justify-center text-slate-500">
-        <p>Select a Jira ticket from the sidebar to view its history and add updates.</p>
+    <main id="workspace" class="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+      <div class="flex-1 flex items-center justify-center text-slate-500 p-8 text-center">
+        <p>Select a Jira ticket from a folder on the left to view its timeline and add updates.</p>
       </div>
     </main>
   </div>
@@ -52,50 +66,102 @@
       </div>
       <div class="flex justify-end space-x-3 mt-6">
         <button onclick="closeNewTicketModal()" class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200">Cancel</button>
-        <button onclick="createNewTicket()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-medium">Save Ticket</button>
+        <button onclick="createNewTicket()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Save Ticket</button>
       </div>
     </div>
   </div>
 
   <script>
-    // Configuration
+    // System Configuration
     const SUPABASE_URL = "https://jikqrfseacrrekpolbsa.supabase.co";
     const SUPABASE_ANON_KEY = ""; 
-    
     let dbClient = null;
 
-    // Search Functionality
-    document.getElementById('searchBar').addEventListener('input', function(e) {
-      const term = e.target.value.toLowerCase();
-      document.querySelectorAll('.ticket-item').forEach(el => {
-        const text = el.innerText.toLowerCase();
-        el.style.display = text.includes(term) ? 'block' : 'none';
-      });
-    });
+    // Folder & Status Rules
+    let allTickets = [];
+    let currentTab = 'Ongoing';
+    const STATUS_MAP = {
+      'Ongoing': ['Waiting Reply', 'Waiting reply', 'In progress'],
+      'Parked Dev': ['Jira Parked Dev'],
+      'Parked': ['Jira Parked'],
+      'Finished': ['Jira Done', 'Jira Closed']
+    };
 
     // UI Functions
     function openNewTicketModal() { document.getElementById('newTicketModal').classList.remove('hidden'); }
     function closeNewTicketModal() { document.getElementById('newTicketModal').classList.add('hidden'); }
 
-    // Fetch Sidebar Tickets
+    // Search trigger
+    document.getElementById('searchBar').addEventListener('input', function() {
+      renderTickets();
+    });
+
+    // Handle Tab Switching
+    function setTab(tabName, tabId) {
+      currentTab = tabName;
+      ['tab-ongoing', 'tab-parkeddev', 'tab-parked', 'tab-finished'].forEach(id => {
+        const el = document.getElementById(id);
+        if(id === tabId) {
+          el.classList.add('border-amber-500', 'text-amber-500');
+          el.classList.remove('border-transparent', 'text-slate-400');
+        } else {
+          el.classList.remove('border-amber-500', 'text-amber-500');
+          el.classList.add('border-transparent', 'text-slate-400');
+        }
+      });
+      renderTickets();
+      document.getElementById('workspace').innerHTML = `<div class="flex-1 flex items-center justify-center text-slate-500 p-8 text-center"><p>Switched to ${tabName} folder. Select a ticket to view.</p></div>`;
+    }
+
+    // Fetch all tickets from database
     async function fetchTickets() {
       if (!dbClient) return;
       const { data, error } = await dbClient.from('tickets').select('*').order('last_updated', { ascending: false });
+      
+      if (error) { 
+        document.getElementById('ticketList').innerHTML = `<p class="text-red-500 text-sm p-4">${error.message}</p>`; 
+        return; 
+      }
+      
+      allTickets = data || [];
+      renderTickets();
+    }
+
+    // Render tickets based on the active tab and search bar
+    function renderTickets() {
       const list = document.getElementById('ticketList');
+      const searchTerm = document.getElementById('searchBar').value.toLowerCase();
       
-      if (error) { list.innerHTML = `<p class="text-red-500 text-sm p-4">${error.message}</p>`; return; }
-      if (data.length === 0) { list.innerHTML = `<p class="text-slate-500 text-sm p-4 text-center">No tickets yet. Click + New Ticket to start!</p>`; return; }
+      const filtered = allTickets.filter(t => {
+        // Fallback to 'Waiting Reply' if status is somehow empty
+        const status = t.status || 'Waiting Reply'; 
+        const matchesTab = STATUS_MAP[currentTab].includes(status);
+        const matchesSearch = t.jira_id.toLowerCase().includes(searchTerm) || (t.summary && t.summary.toLowerCase().includes(searchTerm));
+        return matchesTab && matchesSearch;
+      });
+
+      if (filtered.length === 0) { 
+        list.innerHTML = `<p class="text-slate-500 text-sm p-4 text-center">No tickets found in this folder.</p>`; 
+        return; 
+      }
       
-      list.innerHTML = data.map(t => `
+      list.innerHTML = filtered.map(t => {
+        // Set dynamic colors based on status
+        let badgeColor = "bg-slate-800 text-slate-400 border-slate-700";
+        if(t.status === 'Waiting Reply' || t.status === 'Waiting reply') badgeColor = "bg-amber-500/10 text-amber-500 border-amber-500/20";
+        if(t.status === 'In progress') badgeColor = "bg-blue-500/10 text-blue-400 border-blue-500/20";
+        if(t.status === 'Jira Done' || t.status === 'Jira Closed') badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+
+        return `
         <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:bg-slate-800 cursor-pointer transition-colors border-l-2 border-transparent hover:border-amber-500">
           <div class="flex justify-between items-center mb-1">
-            <span class="text-amber-500 font-medium text-sm">${t.jira_id}</span>
-            <span class="text-xs text-slate-500">${new Date(t.last_updated).toLocaleDateString()}</span>
+            <span class="text-amber-500 font-bold text-sm tracking-wide">${t.jira_id}</span>
+            <span class="text-[10px] uppercase font-bold text-slate-500">${new Date(t.last_updated).toLocaleDateString()}</span>
           </div>
-          <p class="text-slate-300 text-sm truncate">${t.summary}</p>
-          <span class="inline-block mt-2 px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded border border-slate-700">${t.status}</span>
+          <p class="text-slate-300 text-sm truncate mb-3">${t.summary}</p>
+          <span class="inline-block px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider rounded border ${badgeColor}">${t.status || 'Waiting Reply'}</span>
         </div>
-      `).join('');
+      `}).join('');
     }
 
     // Create New Ticket
@@ -104,11 +170,22 @@
       const summary = document.getElementById('newSummary').value;
       if(!jiraId || !summary) return alert("Please fill both fields!");
       
-      const { error } = await dbClient.from('tickets').insert([{ jira_id: jiraId, summary: summary }]);
-      if(error) { alert("Error: " + error.message); } else {
+      // Force all new tickets to start as Waiting Reply
+      const { error } = await dbClient.from('tickets').insert([{ 
+        jira_id: jiraId, 
+        summary: summary,
+        status: 'Waiting Reply' 
+      }]);
+
+      if(error) { 
+        alert("Database Error: " + error.message); 
+      } else {
         closeNewTicketModal();
         document.getElementById('newJiraId').value = '';
         document.getElementById('newSummary').value = '';
+        
+        // Switch to Ongoing tab automatically so they can see their new ticket
+        setTab('Ongoing', 'tab-ongoing');
         fetchTickets(); 
       }
     }
@@ -116,45 +193,49 @@
     // Load Workspace for a specific ticket
     async function openTicket(id) {
       const workspace = document.getElementById('workspace');
-      workspace.innerHTML = `<div class="flex-1 flex items-center justify-center"><p class="text-slate-500 animate-pulse">Loading ticket data...</p></div>`;
+      workspace.innerHTML = `<div class="flex-1 flex items-center justify-center"><p class="text-amber-500 font-medium animate-pulse">Loading workspace...</p></div>`;
 
-      // Grab the ticket and its updates
-      const { data: ticket } = await dbClient.from('tickets').select('*').eq('id', id).single();
-      const { data: updates } = await dbClient.from('ticket_updates').select('*').eq('ticket_id', id).order('created_at', { ascending: true });
+      const { data: ticket, error: ticketErr } = await dbClient.from('tickets').select('*').eq('id', id).single();
+      const { data: updates, error: updatesErr } = await dbClient.from('ticket_updates').select('*').eq('ticket_id', id).order('created_at', { ascending: true });
 
-      const statusOptions = ['Waiting reply', 'In Progress', 'Blocked', 'Resolved', 'Closed'];
+      if (ticketErr || updatesErr) {
+        workspace.innerHTML = `<div class="p-8 text-red-500">Error loading data. See console.</div>`;
+        return;
+      }
+
+      const statusOptions = ['Waiting Reply', 'In progress', 'Jira Parked Dev', 'Jira Parked', 'Jira Done', 'Jira Closed'];
       
       let updatesHtml = updates.length === 0 
         ? `<div class="flex-1 flex items-center justify-center text-slate-600 italic">No notes yet. Start the timeline below.</div>` 
         : `<div class="space-y-4">` + updates.map(u => `
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
-              <div class="text-xs font-semibold text-slate-500 mb-2">${new Date(u.created_at).toLocaleString()}</div>
-              <div class="text-slate-200 text-sm whitespace-pre-wrap">${u.update_text}</div>
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow-sm">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">${new Date(u.created_at).toLocaleString()}</div>
+              <div class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">${u.update_text}</div>
             </div>
           `).join('') + `</div>`;
 
       workspace.innerHTML = `
         <div class="flex flex-col h-full w-full">
-          <div class="p-6 border-b border-slate-800 bg-slate-900/40 flex justify-between items-start">
+          <div class="p-6 border-b border-slate-800 bg-slate-900 flex justify-between items-start shadow-sm z-10">
             <div>
               <h2 class="text-2xl font-bold text-slate-100 mb-2">${ticket.jira_id}</h2>
-              <p class="text-slate-400 text-sm">${ticket.summary}</p>
+              <p class="text-slate-400 text-sm max-w-2xl">${ticket.summary}</p>
             </div>
             <div>
-              <select onchange="updateStatus('${id}', this.value)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer">
+              <select onchange="updateStatus('${id}', this.value)" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer shadow-inner">
                 ${statusOptions.map(s => `<option value="${s}" ${ticket.status === s ? 'selected' : ''}>${s}</option>`).join('')}
               </select>
             </div>
           </div>
           
-          <div class="flex-1 overflow-y-auto p-6 bg-slate-950">
+          <div class="flex-1 overflow-y-auto p-6 bg-slate-950/50">
             ${updatesHtml}
           </div>
 
-          <div class="p-6 border-t border-slate-800 bg-slate-900/60">
-            <textarea id="newUpdateText" rows="3" placeholder="Type your notes, meeting updates, or next steps here..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 mb-3 shadow-inner"></textarea>
+          <div class="p-6 border-t border-slate-800 bg-slate-900 shadow-lg z-10">
+            <textarea id="newUpdateText" rows="3" placeholder="Type your notes, meeting updates, or next steps here..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 mb-4 shadow-inner resize-none"></textarea>
             <div class="flex justify-end">
-              <button onclick="addUpdate('${id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2 rounded-lg text-sm font-bold transition-colors shadow-lg">Post Update</button>
+              <button onclick="addUpdate('${id}')" id="postBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-6 py-2.5 rounded-lg text-sm font-bold transition-colors shadow-lg">Post Update</button>
             </div>
           </div>
         </div>
@@ -164,22 +245,43 @@
     // Post a new note to the timeline
     async function addUpdate(ticketId) {
       const textBox = document.getElementById('newUpdateText');
+      const btn = document.getElementById('postBtn');
       const text = textBox.value;
+      
       if (!text.trim()) return;
 
-      textBox.disabled = true; // Disable briefly while sending
+      // Disable inputs while uploading
+      textBox.disabled = true;
+      btn.disabled = true;
+      btn.innerText = "Posting...";
       
-      await dbClient.from('ticket_updates').insert([{ ticket_id: ticketId, update_text: text }]);
+      // 1. Save the note
+      const { error: insertError } = await dbClient.from('ticket_updates').insert([{ ticket_id: ticketId, update_text: text }]);
+      
+      if (insertError) {
+        alert("SYSTEM ERROR (Could not save note): \n\n" + insertError.message);
+        textBox.disabled = false;
+        btn.disabled = false;
+        btn.innerText = "Post Update";
+        return;
+      }
+
+      // 2. Update the timestamp on the main ticket so it jumps to the top of the sidebar
       await dbClient.from('tickets').update({ last_updated: new Date().toISOString() }).eq('id', ticketId);
 
-      openTicket(ticketId); // Refresh the workspace
-      fetchTickets(); // Bump it to the top of the sidebar
+      // Refresh everything
+      textBox.value = '';
+      openTicket(ticketId); 
+      fetchTickets(); 
     }
 
     // Change Ticket Status
     async function updateStatus(ticketId, newStatus) {
-      await dbClient.from('tickets').update({ status: newStatus, last_updated: new Date().toISOString() }).eq('id', ticketId);
-      fetchTickets(); // Update sidebar visually
+      const { error } = await dbClient.from('tickets').update({ status: newStatus, last_updated: new Date().toISOString() }).eq('id', ticketId);
+      if(error) alert("Could not change status: " + error.message);
+      
+      // Update sidebar visually and potentially move it out of the current folder
+      fetchTickets(); 
     }
 
     // Startup
