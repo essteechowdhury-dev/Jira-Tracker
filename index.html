@@ -35,7 +35,6 @@
         <p>Select a Jira ticket from the sidebar to view its history and add updates.</p>
       </div>
     </main>
-
   </div>
 
   <div id="newTicketModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -59,18 +58,75 @@
   </div>
 
   <script>
-    // Config injected directly or via platform
+    // Configuration
     const SUPABASE_URL = "https://jikqrfseacrrekpolbsa.supabase.co";
-    // We will hook this key setup in our next step safely!
     const SUPABASE_ANON_KEY = ""; 
     
     let supabase = null;
-    if(SUPABASE_ANON_KEY) {
-      supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
 
+    // UI Functions
     function openNewTicketModal() { document.getElementById('newTicketModal').classList.remove('hidden'); }
     function closeNewTicketModal() { document.getElementById('newTicketModal').classList.add('hidden'); }
+
+    // Database Functions
+    async function fetchTickets() {
+      if (!supabase) return;
+      const { data, error } = await supabase.from('tickets').select('*').order('last_updated', { ascending: false });
+      const list = document.getElementById('ticketList');
+      
+      if (error) {
+        list.innerHTML = `<p class="text-red-500 text-sm p-4">${error.message}</p>`;
+        return;
+      }
+      
+      if (data.length === 0) {
+        list.innerHTML = `<p class="text-slate-500 text-sm p-4 text-center">No tickets yet. Click + New Ticket to start!</p>`;
+        return;
+      }
+      
+      list.innerHTML = data.map(t => `
+        <div onclick="openTicket('${t.id}')" class="p-4 hover:bg-slate-800 cursor-pointer transition-colors">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-amber-500 font-medium text-sm">${t.jira_id}</span>
+            <span class="text-xs text-slate-500">${new Date(t.last_updated).toLocaleDateString()}</span>
+          </div>
+          <p class="text-slate-300 text-sm truncate">${t.summary}</p>
+          <span class="inline-block mt-2 px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded border border-slate-700">${t.status}</span>
+        </div>
+      `).join('');
+    }
+
+    async function createNewTicket() {
+      const jiraId = document.getElementById('newJiraId').value;
+      const summary = document.getElementById('newSummary').value;
+      
+      if(!jiraId || !summary) return alert("Please fill both fields!");
+      
+      const { error } = await supabase.from('tickets').insert([{ jira_id: jiraId, summary: summary }]);
+      
+      if(error) {
+        alert("Error: " + error.message);
+      } else {
+        closeNewTicketModal();
+        document.getElementById('newJiraId').value = '';
+        document.getElementById('newSummary').value = '';
+        fetchTickets(); // Refresh the list
+      }
+    }
+
+    function openTicket(id) {
+      document.getElementById('workspace').innerHTML = `<div class="p-6 text-slate-200">Ticket workspace opened! (Timeline feed coming next)</div>`;
+    }
+
+    // Initialize App
+    window.onload = () => {
+      if(SUPABASE_ANON_KEY) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        fetchTickets();
+      } else {
+        document.getElementById('ticketList').innerHTML = `<p class="text-amber-500 text-sm p-4 text-center">Waiting for GitHub Actions... please refresh the page in 1 minute.</p>`;
+      }
+    };
   </script>
 </body>
 </html>
