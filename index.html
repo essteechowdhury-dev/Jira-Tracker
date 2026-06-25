@@ -37,7 +37,7 @@
     </main>
   </div>
 
-  <div id="newTicketModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="newTicketModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
       <h3 class="text-lg font-medium text-slate-200 mb-4">Add New Jira Ticket</h3>
       <div class="space-y-4">
@@ -64,28 +64,30 @@
     
     let dbClient = null;
 
+    // Search Functionality
+    document.getElementById('searchBar').addEventListener('input', function(e) {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll('.ticket-item').forEach(el => {
+        const text = el.innerText.toLowerCase();
+        el.style.display = text.includes(term) ? 'block' : 'none';
+      });
+    });
+
     // UI Functions
     function openNewTicketModal() { document.getElementById('newTicketModal').classList.remove('hidden'); }
     function closeNewTicketModal() { document.getElementById('newTicketModal').classList.add('hidden'); }
 
-    // Database Functions
+    // Fetch Sidebar Tickets
     async function fetchTickets() {
       if (!dbClient) return;
       const { data, error } = await dbClient.from('tickets').select('*').order('last_updated', { ascending: false });
       const list = document.getElementById('ticketList');
       
-      if (error) {
-        list.innerHTML = `<p class="text-red-500 text-sm p-4">${error.message}</p>`;
-        return;
-      }
-      
-      if (data.length === 0) {
-        list.innerHTML = `<p class="text-slate-500 text-sm p-4 text-center">No tickets yet. Click + New Ticket to start!</p>`;
-        return;
-      }
+      if (error) { list.innerHTML = `<p class="text-red-500 text-sm p-4">${error.message}</p>`; return; }
+      if (data.length === 0) { list.innerHTML = `<p class="text-slate-500 text-sm p-4 text-center">No tickets yet. Click + New Ticket to start!</p>`; return; }
       
       list.innerHTML = data.map(t => `
-        <div onclick="openTicket('${t.id}')" class="p-4 hover:bg-slate-800 cursor-pointer transition-colors">
+        <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:bg-slate-800 cursor-pointer transition-colors border-l-2 border-transparent hover:border-amber-500">
           <div class="flex justify-between items-center mb-1">
             <span class="text-amber-500 font-medium text-sm">${t.jira_id}</span>
             <span class="text-xs text-slate-500">${new Date(t.last_updated).toLocaleDateString()}</span>
@@ -96,35 +98,95 @@
       `).join('');
     }
 
+    // Create New Ticket
     async function createNewTicket() {
       const jiraId = document.getElementById('newJiraId').value;
       const summary = document.getElementById('newSummary').value;
-      
       if(!jiraId || !summary) return alert("Please fill both fields!");
       
       const { error } = await dbClient.from('tickets').insert([{ jira_id: jiraId, summary: summary }]);
-      
-      if(error) {
-        alert("Error: " + error.message);
-      } else {
+      if(error) { alert("Error: " + error.message); } else {
         closeNewTicketModal();
         document.getElementById('newJiraId').value = '';
         document.getElementById('newSummary').value = '';
-        fetchTickets(); // Refresh the list
+        fetchTickets(); 
       }
     }
 
-    function openTicket(id) {
-      document.getElementById('workspace').innerHTML = `<div class="p-6 text-slate-200">Ticket workspace opened! (Timeline feed coming next)</div>`;
+    // Load Workspace for a specific ticket
+    async function openTicket(id) {
+      const workspace = document.getElementById('workspace');
+      workspace.innerHTML = `<div class="flex-1 flex items-center justify-center"><p class="text-slate-500 animate-pulse">Loading ticket data...</p></div>`;
+
+      // Grab the ticket and its updates
+      const { data: ticket } = await dbClient.from('tickets').select('*').eq('id', id).single();
+      const { data: updates } = await dbClient.from('ticket_updates').select('*').eq('ticket_id', id).order('created_at', { ascending: true });
+
+      const statusOptions = ['Waiting reply', 'In Progress', 'Blocked', 'Resolved', 'Closed'];
+      
+      let updatesHtml = updates.length === 0 
+        ? `<div class="flex-1 flex items-center justify-center text-slate-600 italic">No notes yet. Start the timeline below.</div>` 
+        : `<div class="space-y-4">` + updates.map(u => `
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+              <div class="text-xs font-semibold text-slate-500 mb-2">${new Date(u.created_at).toLocaleString()}</div>
+              <div class="text-slate-200 text-sm whitespace-pre-wrap">${u.update_text}</div>
+            </div>
+          `).join('') + `</div>`;
+
+      workspace.innerHTML = `
+        <div class="flex flex-col h-full w-full">
+          <div class="p-6 border-b border-slate-800 bg-slate-900/40 flex justify-between items-start">
+            <div>
+              <h2 class="text-2xl font-bold text-slate-100 mb-2">${ticket.jira_id}</h2>
+              <p class="text-slate-400 text-sm">${ticket.summary}</p>
+            </div>
+            <div>
+              <select onchange="updateStatus('${id}', this.value)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer">
+                ${statusOptions.map(s => `<option value="${s}" ${ticket.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          
+          <div class="flex-1 overflow-y-auto p-6 bg-slate-950">
+            ${updatesHtml}
+          </div>
+
+          <div class="p-6 border-t border-slate-800 bg-slate-900/60">
+            <textarea id="newUpdateText" rows="3" placeholder="Type your notes, meeting updates, or next steps here..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 mb-3 shadow-inner"></textarea>
+            <div class="flex justify-end">
+              <button onclick="addUpdate('${id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2 rounded-lg text-sm font-bold transition-colors shadow-lg">Post Update</button>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
-    // Initialize App
+    // Post a new note to the timeline
+    async function addUpdate(ticketId) {
+      const textBox = document.getElementById('newUpdateText');
+      const text = textBox.value;
+      if (!text.trim()) return;
+
+      textBox.disabled = true; // Disable briefly while sending
+      
+      await dbClient.from('ticket_updates').insert([{ ticket_id: ticketId, update_text: text }]);
+      await dbClient.from('tickets').update({ last_updated: new Date().toISOString() }).eq('id', ticketId);
+
+      openTicket(ticketId); // Refresh the workspace
+      fetchTickets(); // Bump it to the top of the sidebar
+    }
+
+    // Change Ticket Status
+    async function updateStatus(ticketId, newStatus) {
+      await dbClient.from('tickets').update({ status: newStatus, last_updated: new Date().toISOString() }).eq('id', ticketId);
+      fetchTickets(); // Update sidebar visually
+    }
+
+    // Startup
     window.onload = () => {
       if(SUPABASE_ANON_KEY) {
         dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         fetchTickets();
-      } else {
-        document.getElementById('ticketList').innerHTML = `<p class="text-amber-500 text-sm p-4 text-center">Connecting to database...</p>`;
       }
     };
   </script>
