@@ -92,7 +92,6 @@
       'Finished': ['Jira Done', 'Jira Closed']
     };
 
-    // Global variables for editing
     let currentEditNoteId = null;
     let currentOpenTicketId = null;
 
@@ -180,8 +179,6 @@
 
     async function deleteTicket(ticketId) {
       if(!confirm("⚠️ Are you sure you want to PERMANENTLY delete this ticket and all its notes?")) return;
-      
-      // Delete notes first to avoid database conflicts, then delete the ticket
       await dbClient.from('ticket_updates').delete().eq('ticket_id', ticketId);
       await dbClient.from('tickets').delete().eq('id', ticketId);
       
@@ -206,11 +203,11 @@
               <div class="flex justify-between items-center mb-3">
                 <div class="text-xs font-bold uppercase tracking-wider text-slate-500">${new Date(u.created_at).toLocaleString()}</div>
                 <div class="opacity-0 group-hover:opacity-100 transition-opacity space-x-2">
-                  <button onclick="openEditNoteModal('${u.id}', '${encodeURIComponent(u.update_text)}')" class="text-xs text-blue-400 hover:text-blue-300">Edit</button>
+                  <button onclick="openEditNoteModal('${u.id}', '${encodeURIComponent(u.content || '')}')" class="text-xs text-blue-400 hover:text-blue-300">Edit</button>
                   <button onclick="deleteNote('${u.id}')" class="text-xs text-red-500 hover:text-red-400">Delete</button>
                 </div>
               </div>
-              <div class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">${u.update_text}</div>
+              <div class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">${u.content}</div>
             </div>
           `).join('') + `</div>`;
 
@@ -247,7 +244,7 @@
       const text = document.getElementById('newUpdateText').value;
       if (!text.trim()) return;
       
-      const { error } = await dbClient.from('ticket_updates').insert([{ ticket_id: ticketId, update_text: text }]);
+      const { error } = await dbClient.from('ticket_updates').insert([{ ticket_id: ticketId, content: text }]);
       if (error) { alert("Error saving note: " + error.message); return; }
 
       await dbClient.from('tickets').update({ last_updated: new Date().toISOString() }).eq('id', ticketId);
@@ -257,7 +254,7 @@
 
     async function saveEditedNote() {
       const newText = document.getElementById('editNoteText').value;
-      await dbClient.from('ticket_updates').update({ update_text: newText }).eq('id', currentEditNoteId);
+      await dbClient.from('ticket_updates').update({ content: newText }).eq('id', currentEditNoteId);
       closeEditNoteModal();
       openTicket(currentOpenTicketId);
     }
