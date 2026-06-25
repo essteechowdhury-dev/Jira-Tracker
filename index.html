@@ -57,7 +57,11 @@
         </div>
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Summary</label>
-          <input type="text" id="newSummary" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+          <input type="text" id="newSummary" placeholder="Subject of the ticket" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Hyperlink (Optional)</label>
+          <input type="url" id="newTicketLink" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
         </div>
       </div>
       <div class="flex justify-end space-x-3 mt-6">
@@ -150,11 +154,16 @@
         if(t.status === 'In progress') badgeColor = "bg-blue-500/10 text-blue-400 border-blue-500/20";
         if(t.status === 'Jira Done' || t.status === 'Jira Closed') badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
 
+        // Logic to show blue hyperlink ONLY if a ticket_link was provided
+        const jiraIdDisplay = t.ticket_link 
+          ? `<a href="${t.ticket_link}" target="_blank" onclick="event.stopPropagation();" title="Open Link" class="text-blue-400 hover:text-blue-300 hover:underline font-bold text-[15px] tracking-wide relative z-10 transition-colors">${t.jira_id} <span class="text-xs opacity-70 ml-0.5">↗</span></a>`
+          : `<span class="text-amber-500 font-bold text-sm tracking-wide">${t.jira_id}</span>`;
+
         return `
-        <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:bg-slate-800 cursor-pointer transition-colors border-l-2 border-transparent hover:border-amber-500">
-          <div class="flex justify-between items-center mb-1">
-            <span class="text-amber-500 font-bold text-sm">${t.jira_id}</span>
-            <span class="text-[10px] uppercase font-bold text-slate-500">${new Date(t.last_updated).toLocaleDateString()}</span>
+        <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:bg-slate-800 cursor-pointer transition-colors border-l-2 border-transparent hover:border-amber-500 relative">
+          <div class="flex justify-between items-start mb-1">
+            ${jiraIdDisplay}
+            <span class="text-[10px] uppercase font-bold text-slate-500 mt-1">${new Date(t.last_updated).toLocaleDateString()}</span>
           </div>
           <p class="text-slate-300 text-sm truncate mb-3">${t.summary}</p>
           <span class="inline-block px-2.5 py-1 text-[11px] font-bold uppercase rounded border ${badgeColor}">${t.status || 'Waiting Reply'}</span>
@@ -165,13 +174,23 @@
     async function createNewTicket() {
       const jiraId = document.getElementById('newJiraId').value;
       const summary = document.getElementById('newSummary').value;
-      if(!jiraId || !summary) return alert("Fill both fields!");
+      const ticketLink = document.getElementById('newTicketLink').value; // Grab the new link field
       
-      const { error } = await dbClient.from('tickets').insert([{ jira_id: jiraId, summary: summary, status: 'Waiting Reply' }]);
+      if(!jiraId || !summary) return alert("Fill Jira ID and Summary fields!");
+      
+      // Save all 3 to the database
+      const { error } = await dbClient.from('tickets').insert([{ 
+        jira_id: jiraId, 
+        summary: summary, 
+        status: 'Waiting Reply',
+        ticket_link: ticketLink
+      }]);
+      
       if(error) { alert("Error: " + error.message); } else {
         closeNewTicketModal();
         document.getElementById('newJiraId').value = '';
         document.getElementById('newSummary').value = '';
+        document.getElementById('newTicketLink').value = ''; // Clear it out
         setTab('Ongoing', 'tab-ongoing');
         fetchTickets(); 
       }
@@ -211,11 +230,19 @@
             </div>
           `).join('') + `</div>`;
 
+      // Workspace Header Logic
+      const headerDisplay = ticket.ticket_link
+        ? `<a href="${ticket.ticket_link}" target="_blank" title="Open Link" class="hover:text-blue-400 hover:underline transition-colors flex items-center gap-2 w-fit">
+            ${ticket.jira_id}
+            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+          </a>`
+        : ticket.jira_id;
+
       workspace.innerHTML = `
         <div class="flex flex-col h-full w-full">
           <div class="p-6 border-b border-slate-800 bg-slate-900 flex justify-between items-start">
             <div>
-              <h2 class="text-2xl font-bold text-slate-100 mb-2">${ticket.jira_id}</h2>
+              <h2 class="text-2xl font-bold text-slate-100 mb-2">${headerDisplay}</h2>
               <p class="text-slate-400 text-sm max-w-2xl">${ticket.summary}</p>
             </div>
             <div class="flex items-center space-x-3">
