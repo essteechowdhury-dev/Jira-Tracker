@@ -32,7 +32,6 @@
   .ticket-footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
   .update-time { color: var(--text2); }
   
-  /* The Dynamic Warning Sign */
   .update-warning-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--warning-light); color: var(--warning); padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid rgba(222,53,11,0.2); animation: pulse 2s infinite; }
   
   @keyframes pulse {
@@ -62,7 +61,6 @@ async function loadTickets() {
     const container = document.getElementById('ticket-container');
     container.innerHTML = '<div class="loading">Fetching data streams...</div>';
 
-    // Fetch the target tickets directly from your database table
     const { data: tickets, error } = await sb.from('tickets').select('*').order('created_at', {ascending: false});
     if (error) throw error;
 
@@ -74,12 +72,9 @@ async function loadTickets() {
     const now = new Date();
 
     container.innerHTML = tickets.map(t => {
-      // Determine time difference since last update or creation
       const lastUpdateDate = new Date(t.updated_at || t.created_at);
       const diffTime = Math.abs(now - lastUpdateDate);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      // Trigger structural update element if 7 or more days have elapsed
       const showWarning = diffDays >= 7;
 
       return `
@@ -93,7 +88,7 @@ async function loadTickets() {
           </div>
           <div class="ticket-footer">
             <div class="update-time">Last modified: ${lastUpdateDate.toLocaleDateString('en-GB', {day:'numeric', month:'short'})}</div>
-            ${showWarning ? `<div class="update-warning-badge">⚠️ Action Required: Stale (${diffDays}d)</div>` : ''}
+            ${showWarning ? `<div class="update-warning-badge">⚠️ Update: Stale (${diffDays}d)</div>` : ''}
           </div>
         </div>
       `;
@@ -107,8 +102,8 @@ async function loadTickets() {
 function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
 window.addEventListener('DOMContentLoaded', () => {
-  const url = "https://qpkwtinwqtetebhqdwji.supabase.co";
-  const key = "sb_publishable_5GwvJ-Ks1enlu-QEc86_6g_8MVrPRa3";
+  const url = "https://jikqrfseacrrekpolbsa.supabase.co";
+  const key = "sb_publishable_PXXdb5dYgPcAFeK9TJamvQ_Qkxbf6vX";
   try { 
     sb = supabase.createClient(url, key); 
     loadTickets(); 
