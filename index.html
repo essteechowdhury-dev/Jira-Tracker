@@ -57,11 +57,13 @@
       
       <!-- Left Sidebar -->
       <aside id="sidebar" class="w-[26rem] shrink-0 border-r border-slate-800 bg-slate-900/50 flex flex-col transition-all duration-300">
-        <div class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs no-scrollbar">
-          <button onclick="setTab('Ongoing', 'tab-ongoing')" id="tab-ongoing" class="px-4 py-3 font-semibold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap transition-colors">Ongoing</button>
-          <button onclick="setTab('Parked Dev', 'tab-parkeddev')" id="tab-parkeddev" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked Dev</button>
-          <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked</button>
-          <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Finished</button>
+        <div class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs no-scrollbar items-center">
+          <button onclick="setTab('Waiting Reply', 'tab-waiting')" id="tab-waiting" class="px-3 py-3 font-semibold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap transition-colors">Waiting Reply</button>
+          <button onclick="setTab('Parked Dev', 'tab-parkeddev')" id="tab-parkeddev" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked Dev</button>
+          <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked</button>
+          <button onclick="setTab('Pause', 'tab-pause')" id="tab-pause" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Pause</button>
+          <button onclick="setTab('Rejected', 'tab-rejected')" id="tab-rejected" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Rejected</button>
+          <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Finished</button>
         </div>
         <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
           <input type="text" id="searchBar" placeholder="Search Jiras..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-200 shadow-inner">
@@ -91,24 +93,23 @@
 
   <!-- MODAL: Add Ticket -->
   <div id="newTicketModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <h3 class="text-lg font-medium text-slate-200 mb-4">Add New Jira Ticket</h3>
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <h3 class="text-lg font-medium text-slate-200 mb-4">Add New Ticket</h3>
       <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Jira ID(s) <span class="normal-case opacity-70">(comma separated)</span></label>
-            <input type="text" id="newJiraId" placeholder="OPPR-10515, OPPR-10516" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Jira Link(s) <span class="normal-case opacity-70">(comma separated)</span></label>
-            <input type="text" id="newTicketLink" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
-          </div>
-        </div>
         
+        <!-- Dynamic Jira List -->
+        <div class="bg-slate-950 p-4 rounded border border-slate-800">
+           <div class="flex justify-between items-center mb-2">
+             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Jira Links</label>
+             <button onclick="addDynamicRow('newJiraContainer', 'jira')" class="text-xs text-amber-500 hover:text-amber-400">+ Add Jira</button>
+           </div>
+           <div id="newJiraContainer" class="space-y-2"></div>
+        </div>
+
         <div class="grid grid-cols-3 gap-4">
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Priority</label>
-            <select id="newPriority" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+            <select id="newPriority" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
               <option value="High">High</option>
               <option value="Medium" selected>Medium</option>
               <option value="Low">Low</option>
@@ -116,38 +117,31 @@
           </div>
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Alert Days</label>
-            <input type="number" id="newFreq" value="7" min="1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+            <input type="number" id="newFreq" value="7" min="1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
           </div>
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Due Date</label>
-            <input type="date" id="newDueDate" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100" style="color-scheme: dark;">
+            <input type="date" id="newDueDate" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100" style="color-scheme: dark;">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Subject</label>
-          <input type="text" id="newSubject" placeholder="Brief subject" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Summary / Details</label>
-          <textarea id="newSummary" rows="2" placeholder="Full summary of the issue..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100 resize-none"></textarea>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Overall Summary / Details</label>
+          <textarea id="newSummary" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100 resize-none"></textarea>
         </div>
         
-        <hr class="border-slate-800 my-2">
-        
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Shelf Title</label>
-            <input type="text" id="newShelfTitle" placeholder="e.g., Q3 Analytics" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Shelf Link</label>
-            <input type="url" id="newShelfLink" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
-          </div>
+        <!-- Dynamic Shelf List -->
+        <div class="bg-slate-950 p-4 rounded border border-slate-800">
+           <div class="flex justify-between items-center mb-2">
+             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Shelf Pages</label>
+             <button onclick="addDynamicRow('newShelfContainer', 'shelf')" class="text-xs text-amber-500 hover:text-amber-400">+ Add Shelf</button>
+           </div>
+           <div id="newShelfContainer" class="space-y-2"></div>
         </div>
+
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Remarks</label>
-          <input type="text" id="newRemark" placeholder="Any quick remarks?" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+          <input type="text" id="newRemark" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
         </div>
       </div>
       <div class="flex justify-end space-x-3 mt-6">
@@ -159,21 +153,19 @@
 
   <!-- MODAL: EDIT TICKET -->
   <div id="editTicketModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-medium text-slate-200">Edit Ticket Details</h3>
         <button onclick="deleteTicket()" class="bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 px-3 py-1.5 rounded text-xs font-bold transition-colors">🗑️ Delete Ticket</button>
       </div>
       <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Jira ID(s)</label>
-            <input type="text" id="editJiraId" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Jira Link(s)</label>
-            <input type="text" id="editTicketLink" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
-          </div>
+        
+        <div class="bg-slate-950 p-4 rounded border border-slate-800">
+           <div class="flex justify-between items-center mb-2">
+             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Jira Links</label>
+             <button onclick="addDynamicRow('editJiraContainer', 'jira')" class="text-xs text-amber-500 hover:text-amber-400">+ Add Jira</button>
+           </div>
+           <div id="editJiraContainer" class="space-y-2"></div>
         </div>
         
         <div class="grid grid-cols-3 gap-4">
@@ -196,26 +188,18 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Subject</label>
-          <input type="text" id="editSubject" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Summary / Details</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Overall Summary / Details</label>
           <textarea id="editSummary" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100 resize-none"></textarea>
         </div>
         
-        <hr class="border-slate-800 my-2">
-        
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Shelf Title</label>
-            <input type="text" id="editShelfTitle" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Shelf Link</label>
-            <input type="url" id="editShelfLink" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
-          </div>
+        <div class="bg-slate-950 p-4 rounded border border-slate-800">
+           <div class="flex justify-between items-center mb-2">
+             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Shelf Pages</label>
+             <button onclick="addDynamicRow('editShelfContainer', 'shelf')" class="text-xs text-amber-500 hover:text-amber-400">+ Add Shelf</button>
+           </div>
+           <div id="editShelfContainer" class="space-y-2"></div>
         </div>
+
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Remarks</label>
           <input type="text" id="editRemark" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
@@ -239,6 +223,9 @@
       </div>
     </div>
   </div>
+  
+  <!-- Hidden File Input for Image Uploading -->
+  <input type="file" id="imageUploader" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
 
   <script>
     const SUPABASE_URL = "https://jikqrfseacrrekpolbsa.supabase.co";
@@ -246,14 +233,22 @@
     let dbClient = null;
 
     let allTickets = [];
-    let currentTab = 'Ongoing';
+    let currentTab = 'Waiting Reply';
     let currentSort = 'last_updated';
+    
     const STATUS_MAP = {
-      'Ongoing': ['Waiting Reply', 'Waiting reply', 'In progress'],
+      'Waiting Reply': ['Waiting Reply', 'Waiting Reply from Airline', 'Waiting Reply from Stakeholder', 'Waiting Reply Internal', 'Waiting reply'],
       'Parked Dev': ['Jira Parked Dev'],
-      'Parked': ['Jira Parked'],
-      'Finished': ['Jira Done', 'Jira Closed']
+      'Parked': ['Parked', 'Jira Parked'],
+      'Pause': ['Paused'],
+      'Rejected': ['Rejected'],
+      'Finished': ['Done', 'Closed', 'Jira Done', 'Jira Closed']
     };
+
+    const ALL_STATUS_OPTIONS = [
+      'Waiting Reply', 'Waiting Reply from Airline', 'Waiting Reply from Stakeholder', 'Waiting Reply Internal', 
+      'In progress', 'Jira Parked Dev', 'Parked', 'Paused', 'Rejected', 'Done', 'Closed'
+    ];
 
     let currentEditNoteId = null;
     let currentOpenTicketId = null;
@@ -292,7 +287,50 @@
       sidebar.classList.toggle('border-r', sidebarOpen);
     }
     
-    // --- CLIPBOARD IMAGE PASTE LOGIC ---
+    // --- DYNAMIC FORM ROWS LOGIC ---
+    function addDynamicRow(containerId, type, data = {}) {
+        const container = document.getElementById(containerId);
+        const row = document.createElement('div');
+        row.className = "flex gap-2 items-center bg-slate-900 p-2 rounded border border-slate-700/50";
+        if(type === 'jira') {
+            row.innerHTML = `
+                <input type="text" placeholder="ID (e.g. OPPR-123)" value="${data.id || ''}" class="dyn-id w-1/4 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
+                <input type="text" placeholder="Subject" value="${data.subj || ''}" class="dyn-subj w-2/4 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
+                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/4 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
+                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
+            `;
+        } else {
+            row.innerHTML = `
+                <input type="text" placeholder="Title" value="${data.title || ''}" class="dyn-title w-1/2 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
+                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/2 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
+                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
+            `;
+        }
+        container.appendChild(row);
+    }
+
+    function extractDynamicData(containerId, type) {
+        const container = document.getElementById(containerId);
+        const rows = container.children;
+        const results = [];
+        for(let i=0; i<rows.length; i++) {
+            if(type === 'jira') {
+                results.push({
+                    id: rows[i].querySelector('.dyn-id').value,
+                    subj: rows[i].querySelector('.dyn-subj').value,
+                    link: rows[i].querySelector('.dyn-link').value
+                });
+            } else {
+                results.push({
+                    title: rows[i].querySelector('.dyn-title').value,
+                    link: rows[i].querySelector('.dyn-link').value
+                });
+            }
+        }
+        return JSON.stringify(results);
+    }
+    
+    // --- MEDIA HANDLING ---
     function handleImagePaste(e) {
       const items = (e.clipboardData || e.originalEvent.clipboardData).items;
       for (let index in items) {
@@ -300,39 +338,71 @@
         if (item.kind === 'file' && item.type.includes('image/')) {
           e.preventDefault();
           const blob = item.getAsFile();
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            const base64 = event.target.result;
-            const txt = e.target;
-            // Inject img tag at cursor
-            txt.value = txt.value.substring(0, txt.selectionStart) + `\n<img src="${base64}" class="max-w-md rounded-lg mt-2 border border-slate-700">\n` + txt.value.substring(txt.selectionEnd);
-          };
-          reader.readAsDataURL(blob);
+          readBlobToNote(blob, e.target);
         }
       }
     }
 
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if(!file) return;
+      const txt = document.getElementById('newUpdateText');
+      readBlobToNote(file, txt);
+      e.target.value = ''; // Reset input
+    }
+
+    function readBlobToNote(blob, textElement) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const base64 = event.target.result;
+        textElement.value = textElement.value.substring(0, textElement.selectionStart) + `\n<img src="${base64}" class="max-w-md rounded-lg mt-2 border border-slate-700">\n` + textElement.value.substring(textElement.selectionEnd);
+      };
+      reader.readAsDataURL(blob);
+    }
+    
+    function insertMarkdown(type) {
+      const textarea = document.getElementById('newUpdateText');
+      if (type === 'link') textarea.value += ` [Link Text](https://...)`;
+      textarea.focus();
+    }
+
     // --- MODALS ---
-    function openNewTicketModal() { document.getElementById('newTicketModal').classList.remove('hidden'); }
+    function openNewTicketModal() { 
+        document.getElementById('newJiraContainer').innerHTML = '';
+        document.getElementById('newShelfContainer').innerHTML = '';
+        addDynamicRow('newJiraContainer', 'jira'); // Add one blank by default
+        addDynamicRow('newShelfContainer', 'shelf'); 
+        document.getElementById('newTicketModal').classList.remove('hidden'); 
+    }
     function closeNewTicketModal() { document.getElementById('newTicketModal').classList.add('hidden'); }
     
     function openEditTicketModal() {
       const t = allTickets.find(tick => tick.id === currentOpenTicketId);
       if(!t) return;
-      document.getElementById('editJiraId').value = t.jira_id || '';
-      document.getElementById('editTicketLink').value = t.ticket_link || '';
+      
+      const jiraCont = document.getElementById('editJiraContainer');
+      const shelfCont = document.getElementById('editShelfContainer');
+      jiraCont.innerHTML = ''; shelfCont.innerHTML = '';
+      
+      // Parse safely to populate modal
+      try {
+          const jiras = t.jira_id.startsWith('[') ? JSON.parse(t.jira_id) : [{id: t.jira_id, link: t.ticket_link, subj: t.subject}];
+          jiras.forEach(j => addDynamicRow('editJiraContainer', 'jira', j));
+      } catch(e) { addDynamicRow('editJiraContainer', 'jira', {id: t.jira_id}); }
+
+      try {
+          const shelves = (t.shelf_title && t.shelf_title.startsWith('[')) ? JSON.parse(t.shelf_title) : [{title: t.shelf_title, link: t.shelf_link}];
+          shelves.forEach(s => { if(s.title || s.link) addDynamicRow('editShelfContainer', 'shelf', s) });
+      } catch(e) { addDynamicRow('editShelfContainer', 'shelf', {title: t.shelf_title, link: t.shelf_link}); }
+
       document.getElementById('editPriority').value = t.priority || 'Medium';
       document.getElementById('editFreq').value = t.update_frequency_days || 7;
       document.getElementById('editDueDate').value = t.due_date || '';
-      document.getElementById('editSubject').value = t.subject || '';
       document.getElementById('editSummary').value = t.summary || '';
-      document.getElementById('editShelfTitle').value = t.shelf_title || '';
-      document.getElementById('editShelfLink').value = t.shelf_link || '';
       document.getElementById('editRemark').value = t.remark || '';
       document.getElementById('editTicketModal').classList.remove('hidden');
     }
     function closeEditTicketModal() { document.getElementById('editTicketModal').classList.add('hidden'); }
-
     function openEditNoteModal(noteId, encodedText) { currentEditNoteId = noteId; document.getElementById('editNoteText').value = decodeURIComponent(encodedText); document.getElementById('editNoteModal').classList.remove('hidden'); }
     function closeEditNoteModal() { document.getElementById('editNoteModal').classList.add('hidden'); }
 
@@ -341,7 +411,7 @@
 
     function setTab(tabName, tabId) {
       currentTab = tabName;
-      ['tab-ongoing', 'tab-parkeddev', 'tab-parked', 'tab-finished'].forEach(id => {
+      ['tab-waiting', 'tab-parkeddev', 'tab-parked', 'tab-pause', 'tab-rejected', 'tab-finished'].forEach(id => {
         const el = document.getElementById(id);
         if(id === tabId) { el.classList.add('border-amber-500', 'text-amber-500'); el.classList.remove('border-transparent', 'text-slate-400'); } 
         else { el.classList.remove('border-amber-500', 'text-amber-500'); el.classList.add('border-transparent', 'text-slate-400'); }
@@ -367,7 +437,6 @@
         return STATUS_MAP[currentTab].includes(status) && searchString.includes(searchTerm);
       });
 
-      // Sorting Logic
       filtered.sort((a, b) => {
         if (currentSort === 'last_updated') return new Date(b.last_updated || 0) - new Date(a.last_updated || 0);
         if (currentSort === 'alpha') return (a.jira_id || '').localeCompare(b.jira_id || '');
@@ -387,15 +456,16 @@
 
       list.innerHTML = filtered.map(t => {
         let badgeColor = "bg-slate-800 text-slate-400 border-slate-700";
-        if(t.status === 'Waiting Reply' || t.status === 'Waiting reply') badgeColor = "bg-amber-500/10 text-amber-500 border-amber-500/20";
+        if(t.status.includes('Waiting')) badgeColor = "bg-amber-500/10 text-amber-500 border-amber-500/20";
         if(t.status === 'In progress') badgeColor = "bg-blue-500/10 text-blue-400 border-blue-500/20";
-        if(t.status === 'Jira Done' || t.status === 'Jira Closed') badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+        if(t.status === 'Done' || t.status === 'Closed' || t.status.includes('Jira Done')) badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+        if(t.status === 'Rejected') badgeColor = "bg-red-500/10 text-red-400 border-red-500/20";
 
         let prioBorder = 'border-transparent hover:border-amber-500';
         if (t.priority === 'High') prioBorder = 'border-red-500/80 hover:border-red-400';
         if (t.priority === 'Low') prioBorder = 'border-blue-500/80 hover:border-blue-400';
 
-        const isFinished = t.status === 'Jira Done' || t.status === 'Jira Closed';
+        const isFinished = t.status === 'Done' || t.status === 'Closed' || t.status.includes('Jira Done') || t.status === 'Rejected';
         const freqDays = t.update_frequency_days || 7;
         const needsUpdate = ((now - new Date(t.last_updated)) / (1000 * 60 * 60 * 24)) > freqDays && !isFinished;
 
@@ -405,14 +475,22 @@
           if (daysToDue < 0) dueBadgeHtml = `<span class="text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-500/10 px-2 py-1 rounded border border-red-500/20">Overdue</span>`;
           else if (daysToDue <= 2) dueBadgeHtml = `<span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">Due Soon</span>`;
         }
+        
+        // Quick parse for title
+        let displayTitle = "Legacy Ticket";
+        try {
+             if(t.jira_id.startsWith('[')) {
+                 const parsed = JSON.parse(t.jira_id);
+                 displayTitle = parsed.map(j => j.id).join(', ');
+             } else displayTitle = t.jira_id;
+        } catch(e) { displayTitle = t.jira_id; }
 
         return `
         <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:bg-slate-800 cursor-pointer transition-colors border-l-4 ${prioBorder} relative">
-          <div class="flex justify-between items-start mb-1">
-            <span class="text-slate-100 font-bold text-sm tracking-wide line-clamp-1 mr-2">${t.jira_id}</span>
+          <div class="flex justify-between items-start mb-1 gap-2">
+            <span class="text-slate-100 font-bold text-sm tracking-wide line-clamp-1">${displayTitle}</span>
             <span class="text-[10px] uppercase font-bold text-slate-500 mt-1 whitespace-nowrap">Last update: ${new Date(t.last_updated).toLocaleDateString()}</span>
           </div>
-          ${t.subject ? `<p class="text-slate-300 text-sm font-semibold truncate mb-1">${t.subject}</p>` : ''}
           <div class="flex justify-between items-center mt-2">
             <span class="inline-block px-2.5 py-1 text-[11px] font-bold uppercase rounded border ${badgeColor}">${t.status || 'Waiting Reply'}</span>
             <div class="flex gap-1">
@@ -425,43 +503,43 @@
     }
 
     async function createNewTicket() {
+      const jiraJson = extractDynamicData('newJiraContainer', 'jira');
+      const shelfJson = extractDynamicData('newShelfContainer', 'shelf');
+      
       const insertData = {
-        jira_id: document.getElementById('newJiraId').value,
-        subject: document.getElementById('newSubject').value,
+        jira_id: jiraJson, 
+        shelf_title: shelfJson,
         summary: document.getElementById('newSummary').value,
-        ticket_link: document.getElementById('newTicketLink').value,
-        shelf_title: document.getElementById('newShelfTitle').value,
-        shelf_link: document.getElementById('newShelfLink').value,
         remark: document.getElementById('newRemark').value,
         priority: document.getElementById('newPriority').value,
         update_frequency_days: parseInt(document.getElementById('newFreq').value) || 7,
         due_date: document.getElementById('newDueDate').value || null,
         status: 'Waiting Reply'
       };
-      if(!insertData.jira_id) return alert("Jira ID is required!");
       
       const { error } = await dbClient.from('tickets').insert([insertData]);
       if(error) { alert("Error: " + error.message); } else {
         closeNewTicketModal();
-        ['newJiraId', 'newSubject', 'newSummary', 'newTicketLink', 'newShelfTitle', 'newShelfLink', 'newRemark', 'newDueDate'].forEach(id => document.getElementById(id).value = '');
+        ['newSummary', 'newRemark', 'newDueDate'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('newPriority').value = 'Medium'; document.getElementById('newFreq').value = '7';
-        setTab('Ongoing', 'tab-ongoing'); fetchTickets(); 
+        setTab('Waiting Reply', 'tab-waiting'); fetchTickets(); 
       }
     }
 
     async function saveTicketEdits() {
+      const jiraJson = extractDynamicData('editJiraContainer', 'jira');
+      const shelfJson = extractDynamicData('editShelfContainer', 'shelf');
+      
       const updateData = {
-        jira_id: document.getElementById('editJiraId').value,
-        subject: document.getElementById('editSubject').value,
+        jira_id: jiraJson, 
+        shelf_title: shelfJson,
         summary: document.getElementById('editSummary').value,
-        ticket_link: document.getElementById('editTicketLink').value,
-        shelf_title: document.getElementById('editShelfTitle').value,
-        shelf_link: document.getElementById('editShelfLink').value,
         remark: document.getElementById('editRemark').value,
         priority: document.getElementById('editPriority').value,
         update_frequency_days: parseInt(document.getElementById('editFreq').value) || 7,
         due_date: document.getElementById('editDueDate').value || null,
       };
+      
       const { error } = await dbClient.from('tickets').update(updateData).eq('id', currentOpenTicketId);
       if(error) { alert("Error: " + error.message); } else {
         closeEditTicketModal(); fetchTickets(); openTicket(currentOpenTicketId);
@@ -477,16 +555,13 @@
       fetchTickets();
     }
 
-    function toggleReplyBox(id) {
-      document.getElementById(`replyBox-${id}`).classList.toggle('hidden');
-    }
+    function toggleReplyBox(id) { document.getElementById(`replyBox-${id}`).classList.toggle('hidden'); }
 
     async function submitReply(noteId) {
       const replyVal = document.getElementById(`replyText-${noteId}`).value;
       if(!replyVal.trim()) return;
       
       const { data } = await dbClient.from('ticket_updates').select('content').eq('id', noteId).single();
-      // Append visually threaded blockquote 
       const newContent = data.content + `\n\n<div class="pl-4 border-l-2 border-emerald-500/50 mt-3 text-slate-300"><span class="text-emerald-500 text-[10px] font-bold uppercase tracking-wider block mb-1">↳ Reply Thread</span>${replyVal}</div>`;
       
       await dbClient.from('ticket_updates').update({ content: newContent }).eq('id', noteId);
@@ -500,8 +575,6 @@
 
       const { data: ticket } = await dbClient.from('tickets').select('*').eq('id', id).single();
       const { data: updates } = await dbClient.from('ticket_updates').select('*').eq('ticket_id', id).order('created_at', { ascending: true });
-
-      const statusOptions = ['Waiting Reply', 'In progress', 'Jira Parked Dev', 'Jira Parked', 'Jira Done', 'Jira Closed'];
       
       let updatesHtml = updates.length === 0 
         ? `<div class="flex-1 flex items-center justify-center text-slate-600 italic">No notes yet.</div>` 
@@ -515,9 +588,8 @@
                   <button onclick="deleteNote('${u.id}')" class="text-xs text-red-500 hover:text-red-400">Delete</button>
                 </div>
               </div>
-              <div class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed prose prose-invert max-w-none">${u.content}</div>
+              <div class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed prose prose-invert max-w-none break-words overflow-hidden">${u.content}</div>
               
-              <!-- Hidden Reply Thread Box -->
               <div id="replyBox-${u.id}" class="hidden mt-4 pl-4 border-l-2 border-slate-700">
                 <textarea id="replyText-${u.id}" rows="2" placeholder="Type a reply to this thread..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-slate-100 focus:outline-none focus:border-amber-500 resize-none"></textarea>
                 <div class="flex justify-end mt-2">
@@ -527,42 +599,53 @@
             </div>
           `).join('') + `</div>`;
 
-      // Handle Multiple Jira Links
-      const jiraIds = (ticket.jira_id || '').split(',').map(s=>s.trim());
-      const ticketLinks = (ticket.ticket_link || '').split(',').map(s=>s.trim());
-      
-      const headerDisplay = jiraIds.map((jid, idx) => {
-         if (ticketLinks[idx]) return `<a href="${ticketLinks[idx]}" target="_blank" class="hover:text-blue-400 hover:underline mr-3 inline-flex items-center gap-1">${jid} ↗</a>`;
-         return `<span class="mr-3 inline-block">${jid}</span>`;
-      }).join('');
+      // Handle Dynamic Jira Rendering
+      let headerDisplay = '';
+      try {
+          if(ticket.jira_id.startsWith('[')) {
+              const jiras = JSON.parse(ticket.jira_id);
+              headerDisplay = jiras.map(j => `
+                <div class="mb-3 bg-slate-950/50 p-3 rounded-lg border border-slate-800 w-full">
+                   <div class="text-xl font-bold text-slate-100">${j.link ? `<a href="${j.link}" target="_blank" class="hover:text-blue-400 hover:underline">${j.id} ↗</a>` : j.id}</div>
+                   ${j.subj ? `<div class="text-slate-400 text-sm mt-1">${j.subj}</div>` : ''}
+                </div>
+              `).join('');
+          } else {
+              headerDisplay = `<div class="text-2xl font-bold text-slate-100 mb-2">${ticket.ticket_link ? `<a href="${ticket.ticket_link}" target="_blank" class="hover:text-blue-400 hover:underline">${ticket.jira_id} ↗</a>` : ticket.jira_id}</div>`;
+          }
+      } catch(e) { headerDisplay = `<div class="text-2xl font-bold text-slate-100 mb-2">${ticket.jira_id}</div>`; }
 
-      // Build Shelf UI
+      // Handle Dynamic Shelf Rendering
       let shelfHtml = '';
-      if(ticket.shelf_title || ticket.shelf_link || ticket.remark) {
-        shelfHtml = `<div class="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 mt-4 flex items-center gap-4 text-sm">
-          ${ticket.shelf_title ? `<div><span class="text-slate-500 text-xs uppercase font-bold mr-2">Shelf:</span><a href="${ticket.shelf_link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold">${ticket.shelf_title}</a></div>` : ''}
-          ${ticket.remark ? `<div class="border-l border-slate-700 pl-4"><span class="text-slate-500 text-xs uppercase font-bold mr-2">Remark:</span><span class="text-slate-300">${ticket.remark}</span></div>` : ''}
-        </div>`;
-      }
+      try {
+          if(ticket.shelf_title && ticket.shelf_title.startsWith('[')) {
+              const shelves = JSON.parse(ticket.shelf_title);
+              shelfHtml = shelves.filter(s => s.title || s.link).map(s => `<a href="${s.link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold block bg-slate-800/50 px-3 py-1.5 rounded border border-slate-700/50 mb-1">${s.title || 'Link'}</a>`).join('');
+              if(shelfHtml) shelfHtml = `<div class="mt-3"><span class="text-slate-500 text-xs uppercase font-bold block mb-1">Shelf Pages:</span>${shelfHtml}</div>`;
+          } else if (ticket.shelf_title) {
+              shelfHtml = `<div class="mt-3"><span class="text-slate-500 text-xs uppercase font-bold block mb-1">Shelf Pages:</span><a href="${ticket.shelf_link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold bg-slate-800/50 px-3 py-1.5 rounded border border-slate-700/50 inline-block">${ticket.shelf_title}</a></div>`;
+          }
+      } catch(e) { }
 
       workspace.innerHTML = `
         <div class="flex flex-col h-full w-full">
           <div class="p-6 border-b border-slate-800 bg-slate-900 flex justify-between items-start">
             <div class="max-w-3xl flex-1 pr-6">
-              <div class="flex flex-wrap items-center gap-3 mb-2">
-                <h2 class="text-2xl font-bold text-slate-100 flex flex-wrap items-center">${headerDisplay}</h2>
+              <div class="flex gap-2 mb-3">
                 <span class="px-2 py-0.5 rounded text-xs font-bold border ${ticket.priority === 'High' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (ticket.priority === 'Low' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20')}">${ticket.priority || 'Medium'} Prio</span>
                 ${ticket.due_date ? `<span class="px-2 py-0.5 rounded text-xs font-bold border bg-slate-800 text-slate-300 border-slate-700">Due: ${new Date(ticket.due_date).toLocaleDateString()}</span>` : ''}
               </div>
-              ${ticket.subject ? `<h3 class="text-lg font-semibold text-slate-200 mb-2">${ticket.subject}</h3>` : ''}
-              ${ticket.summary ? `<div class="bg-slate-950/50 p-3 rounded border border-slate-800 text-slate-400 text-sm italic mb-2">${ticket.summary}</div>` : ''}
+              
+              ${headerDisplay}
+              ${ticket.summary ? `<div class="bg-slate-950/50 p-3 rounded border border-slate-800 text-slate-300 text-sm italic mb-2">${ticket.summary}</div>` : ''}
               ${shelfHtml}
+              ${ticket.remark ? `<div class="mt-3 bg-amber-500/10 border border-amber-500/20 rounded p-2 text-amber-400 text-xs"><span class="font-bold uppercase tracking-wider mr-2">Remark:</span>${ticket.remark}</div>` : ''}
             </div>
-            <div class="flex items-center space-x-3 shrink-0">
-              <button onclick="openEditTicketModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2 rounded-lg text-sm transition-colors font-medium">✏️ Edit Ticket</button>
-              <select onchange="updateStatus('${id}', this.value)" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm font-medium text-slate-200 focus:outline-none focus:border-amber-500">
-                ${statusOptions.map(s => `<option value="${s}" ${ticket.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+            <div class="flex flex-col items-end space-y-3 shrink-0">
+              <select onchange="updateStatus('${id}', this.value)" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm font-medium text-slate-200 focus:outline-none focus:border-amber-500 max-w-[200px]">
+                ${ALL_STATUS_OPTIONS.map(s => `<option value="${s}" ${ticket.status === s ? 'selected' : ''}>${s}</option>`).join('')}
               </select>
+              <button onclick="openEditTicketModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg text-sm transition-colors font-medium">✏️ Edit</button>
             </div>
           </div>
           
@@ -572,7 +655,11 @@
 
           <div class="p-6 border-t border-slate-800 bg-slate-900">
             <div class="flex items-center justify-between mb-2">
-               <span class="text-xs text-slate-500 italic">💡 Tip: You can paste (Ctrl+V) images directly into the text box below!</span>
+               <div class="flex gap-2">
+                 <button onclick="insertMarkdown('link')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition">🔗 Add Link</button>
+                 <button onclick="document.getElementById('imageUploader').click()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition">📎 Attach Image</button>
+               </div>
+               <span class="text-[10px] text-slate-500 italic hidden sm:block">Ctrl+V to paste images!</span>
             </div>
             <textarea id="newUpdateText" rows="3" placeholder="Type your notes here..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 mb-3 resize-none"></textarea>
             <div class="flex justify-end">
@@ -581,8 +668,6 @@
           </div>
         </div>
       `;
-
-      // Attach Paste Listener for Images
       document.getElementById('newUpdateText').addEventListener('paste', handleImagePaste);
     }
 
