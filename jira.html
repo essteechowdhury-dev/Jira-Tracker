@@ -11,42 +11,77 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans">
+<body class="h-full font-sans overflow-hidden">
 
-  <header class="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between z-10 shadow-sm">
-    <div class="flex items-center space-x-3">
-      <div class="bg-amber-500 text-slate-950 p-2 rounded-lg font-bold text-sm">Jira</div>
-      <h1 class="text-xl font-semibold tracking-tight text-slate-200">Tracker Workspace</h1>
+  <!-- 🔒 LOGIN SCREEN -->
+  <div id="loginScreen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-[100]">
+    <div class="bg-slate-900 border border-slate-800 p-8 rounded-xl shadow-2xl max-w-sm w-full">
+      <div class="text-center mb-6">
+        <span class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg font-bold text-sm tracking-wide">Jira Workspace</span>
+        <h2 class="text-2xl font-semibold mt-4 text-slate-100">Welcome Back</h2>
+        <p class="text-slate-400 text-sm mt-1">Please sign in to access your tracker.</p>
+      </div>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Email</label>
+          <input type="email" id="loginEmail" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Password</label>
+          <input type="password" id="loginPassword" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-slate-100" onkeypress="if(event.key === 'Enter') handleLogin()">
+        </div>
+        <p id="loginError" class="text-red-500 text-xs hidden text-center font-medium"></p>
+        <button onclick="handleLogin()" id="loginBtn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 py-2.5 rounded-lg text-sm font-bold shadow-lg transition-colors mt-2">Sign In</button>
+      </div>
     </div>
-    <button onclick="openNewTicketModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">
-      + New Ticket
-    </button>
-  </header>
-
-  <div class="flex-1 flex overflow-hidden">
-    
-    <aside class="w-[26rem] border-r border-slate-800 bg-slate-900/50 flex flex-col">
-      <div class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs no-scrollbar">
-        <button onclick="setTab('Ongoing', 'tab-ongoing')" id="tab-ongoing" class="px-4 py-3 font-semibold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap transition-colors">Ongoing</button>
-        <button onclick="setTab('Parked Dev', 'tab-parkeddev')" id="tab-parkeddev" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked Dev</button>
-        <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked</button>
-        <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Finished</button>
-      </div>
-      <div class="p-4 border-b border-slate-800">
-        <input type="text" id="searchBar" placeholder="Search Jiras..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-200 shadow-inner">
-      </div>
-      <div id="ticketList" class="flex-1 overflow-y-auto divide-y divide-slate-800/60">
-        <p class="text-slate-500 text-sm p-4 text-center">Loading tickets...</p>
-      </div>
-    </aside>
-
-    <main id="workspace" class="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
-      <div class="flex-1 flex items-center justify-center text-slate-500 p-8 text-center">
-        <p>Select a Jira ticket from a folder on the left to view its timeline.</p>
-      </div>
-    </main>
   </div>
 
+  <!-- 🚀 MAIN APP WORKSPACE (Hidden by default) -->
+  <div id="appWorkspace" class="hidden h-full flex flex-col">
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between z-10 shadow-sm">
+      <div class="flex items-center space-x-3">
+        <div class="bg-amber-500 text-slate-950 p-2 rounded-lg font-bold text-sm">Jira</div>
+        <h1 class="text-xl font-semibold tracking-tight text-slate-200">Tracker Workspace</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button onclick="openNewTicketModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">
+          + New Ticket
+        </button>
+        <button onclick="handleLogout()" class="text-slate-400 hover:text-slate-200 text-sm font-medium transition-colors">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- Main Split-Screen Container -->
+    <div class="flex-1 flex overflow-hidden">
+      
+      <!-- Left Sidebar -->
+      <aside class="w-[26rem] border-r border-slate-800 bg-slate-900/50 flex flex-col">
+        <div class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs no-scrollbar">
+          <button onclick="setTab('Ongoing', 'tab-ongoing')" id="tab-ongoing" class="px-4 py-3 font-semibold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap transition-colors">Ongoing</button>
+          <button onclick="setTab('Parked Dev', 'tab-parkeddev')" id="tab-parkeddev" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked Dev</button>
+          <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked</button>
+          <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Finished</button>
+        </div>
+        <div class="p-4 border-b border-slate-800">
+          <input type="text" id="searchBar" placeholder="Search Jiras..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-200 shadow-inner">
+        </div>
+        <div id="ticketList" class="flex-1 overflow-y-auto divide-y divide-slate-800/60">
+          <p class="text-slate-500 text-sm p-4 text-center">Loading tickets...</p>
+        </div>
+      </aside>
+
+      <!-- Right Workspace -->
+      <main id="workspace" class="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+        <div class="flex-1 flex items-center justify-center text-slate-500 p-8 text-center">
+          <p>Select a Jira ticket from a folder on the left to view its timeline.</p>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Ticket -->
   <div id="newTicketModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
       <h3 class="text-lg font-medium text-slate-200 mb-4">Add New Jira Ticket</h3>
@@ -75,6 +110,7 @@
     </div>
   </div>
 
+  <!-- MODAL: Edit Note -->
   <div id="editNoteModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
       <h3 class="text-lg font-medium text-slate-200 mb-4">Edit Note</h3>
@@ -88,7 +124,7 @@
 
   <script>
     const SUPABASE_URL = "https://jikqrfseacrrekpolbsa.supabase.co";
-    const SUPABASE_ANON_KEY = ""; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imppa3FyZnNlYWNycmVrcG9sYnNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTMzMjMsImV4cCI6MjA5NTYyOTMyM30.Ca-4IFwgmQG2ePn0Sg6hb2txskW7qtAqRWSoPz99vXc"; 
     let dbClient = null;
 
     let allTickets = [];
@@ -103,6 +139,61 @@
     let currentEditNoteId = null;
     let currentOpenTicketId = null;
 
+    // --- AUTHENTICATION LOGIC ---
+    async function checkSession() {
+      const { data: { session } } = await dbClient.auth.getSession();
+      if (session) {
+        showApp();
+      } else {
+        showLogin();
+      }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const errorText = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+
+      if (!email || !password) return;
+
+      btn.innerText = "Signing in...";
+      errorText.classList.add('hidden');
+
+      const { data, error } = await dbClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        errorText.innerText = error.message;
+        errorText.classList.remove('hidden');
+        btn.innerText = "Sign In";
+      } else {
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        btn.innerText = "Sign In";
+        showApp();
+      }
+    }
+
+    async function handleLogout() {
+      await dbClient.auth.signOut();
+      showLogin();
+    }
+
+    function showApp() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('appWorkspace').classList.remove('hidden');
+      fetchTickets(); // Only fetch data once we are safely logged in!
+    }
+
+    function showLogin() {
+      document.getElementById('appWorkspace').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      // Clear data from screen
+      document.getElementById('ticketList').innerHTML = '';
+      document.getElementById('workspace').innerHTML = '<div class="flex-1 flex items-center justify-center text-slate-500 p-8 text-center"><p>Select a Jira ticket from a folder on the left to view its timeline.</p></div>';
+    }
+
+    // --- APP LOGIC ---
     function openNewTicketModal() { document.getElementById('newTicketModal').classList.remove('hidden'); }
     function closeNewTicketModal() { document.getElementById('newTicketModal').classList.add('hidden'); }
     
@@ -133,7 +224,7 @@
     async function fetchTickets() {
       if (!dbClient) return;
       const { data, error } = await dbClient.from('tickets').select('*').order('last_updated', { ascending: false });
-      if (error) { document.getElementById('ticketList').innerHTML = `<p class="text-red-500 text-sm p-4">${error.message}</p>`; return; }
+      if (error) { console.error(error.message); return; }
       allTickets = data || [];
       renderTickets();
     }
@@ -152,7 +243,7 @@
         list.innerHTML = `<p class="text-slate-500 text-sm p-4 text-center">No tickets found.</p>`; return; 
       }
       
-      const now = new Date(); // Get today's date once for performance
+      const now = new Date(); 
 
       list.innerHTML = filtered.map(t => {
         let badgeColor = "bg-slate-800 text-slate-400 border-slate-700";
@@ -160,11 +251,9 @@
         if(t.status === 'In progress') badgeColor = "bg-blue-500/10 text-blue-400 border-blue-500/20";
         if(t.status === 'Jira Done' || t.status === 'Jira Closed') badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
 
-        // --- STALE TICKET LOGIC ---
         const lastUpdateDate = new Date(t.last_updated);
         const daysSinceUpdate = (now - lastUpdateDate) / (1000 * 60 * 60 * 24);
         const isFinished = t.status === 'Jira Done' || t.status === 'Jira Closed';
-        // Only show badge if it's over 7 days old AND not in the Finished tab
         const needsUpdate = daysSinceUpdate > 7 && !isFinished;
 
         const jiraIdDisplay = t.ticket_link 
@@ -316,10 +405,18 @@
       fetchTickets(); 
     }
 
+    // Initialize Database & Check Login
     window.onload = () => {
       if(SUPABASE_ANON_KEY) {
         dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        fetchTickets();
+        
+        // Listen for session changes (like staying logged in on refresh)
+        dbClient.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN') showApp();
+          if (event === 'SIGNED_OUT') showLogin();
+        });
+        
+        checkSession();
       }
     };
   </script>
