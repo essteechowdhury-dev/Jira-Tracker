@@ -7,8 +7,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* Hide scrollbar for tabs but keep them scrollable */
     .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; cursor: grab; }
+    .no-scrollbar:active { cursor: grabbing; }
   </style>
 </head>
 <body class="h-full font-sans overflow-hidden">
@@ -57,13 +59,14 @@
       
       <!-- Left Sidebar -->
       <aside id="sidebar" class="w-[26rem] shrink-0 border-r border-slate-800 bg-slate-900/50 flex flex-col transition-all duration-300">
-        <div class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs no-scrollbar items-center">
-          <button onclick="setTab('Waiting Reply', 'tab-waiting')" id="tab-waiting" class="px-3 py-3 font-semibold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap transition-colors">Waiting Reply</button>
-          <button onclick="setTab('Parked Dev', 'tab-parkeddev')" id="tab-parkeddev" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked Dev</button>
-          <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked</button>
-          <button onclick="setTab('Pause', 'tab-pause')" id="tab-pause" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Pause</button>
-          <button onclick="setTab('Rejected', 'tab-rejected')" id="tab-rejected" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Rejected</button>
-          <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-3 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Finished</button>
+        <!-- DRAGGABLE TABS -->
+        <div id="tabsContainer" class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs no-scrollbar items-center select-none">
+          <button onclick="setTab('In Progress', 'tab-inprogress')" id="tab-inprogress" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">In Progress</button>
+          <button onclick="setTab('Waiting Reply', 'tab-waiting')" id="tab-waiting" class="px-4 py-3 font-semibold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap transition-colors shrink-0">Waiting Reply</button>
+          <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Parked</button>
+          <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Finished</button>
+          <button onclick="setTab('Rejected', 'tab-rejected')" id="tab-rejected" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Rejected</button>
+          <button onclick="setTab('Pause', 'tab-pause')" id="tab-pause" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Pause</button>
         </div>
         <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
           <input type="text" id="searchBar" placeholder="Search Jiras..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-200 shadow-inner">
@@ -97,7 +100,6 @@
       <h3 class="text-lg font-medium text-slate-200 mb-4">Add New Ticket</h3>
       <div class="space-y-4">
         
-        <!-- Dynamic Jira List -->
         <div class="bg-slate-950 p-4 rounded border border-slate-800">
            <div class="flex justify-between items-center mb-2">
              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Jira Links</label>
@@ -130,7 +132,6 @@
           <textarea id="newSummary" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100 resize-none"></textarea>
         </div>
         
-        <!-- Dynamic Shelf List -->
         <div class="bg-slate-950 p-4 rounded border border-slate-800">
            <div class="flex justify-between items-center mb-2">
              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Shelf Pages</label>
@@ -212,19 +213,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Edit Note -->
-  <div id="editNoteModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
-      <h3 class="text-lg font-medium text-slate-200 mb-4">Edit Note</h3>
-      <textarea id="editNoteText" rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 shadow-inner resize-none"></textarea>
-      <div class="flex justify-end space-x-3 mt-4">
-        <button onclick="closeEditNoteModal()" class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200">Cancel</button>
-        <button onclick="saveEditedNote()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Update Note</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Hidden File Input for Image Uploading -->
   <input type="file" id="imageUploader" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
 
   <script>
@@ -236,43 +224,55 @@
     let currentTab = 'Waiting Reply';
     let currentSort = 'last_updated';
     
+    // Updated Status Map as Requested
     const STATUS_MAP = {
+      'In Progress': ['In progress'],
       'Waiting Reply': ['Waiting Reply', 'Waiting Reply from Airline', 'Waiting Reply from Stakeholder', 'Waiting Reply Internal', 'Waiting reply'],
-      'Parked Dev': ['Jira Parked Dev'],
-      'Parked': ['Parked', 'Jira Parked'],
-      'Pause': ['Paused'],
+      'Parked': ['Parked', 'Jira Parked', 'Jira Parked Dev'],
+      'Finished': ['Done', 'Closed', 'Jira Done', 'Jira Closed'],
       'Rejected': ['Rejected'],
-      'Finished': ['Done', 'Closed', 'Jira Done', 'Jira Closed']
+      'Pause': ['Paused']
     };
 
     const ALL_STATUS_OPTIONS = [
-      'Waiting Reply', 'Waiting Reply from Airline', 'Waiting Reply from Stakeholder', 'Waiting Reply Internal', 
-      'In progress', 'Jira Parked Dev', 'Parked', 'Paused', 'Rejected', 'Done', 'Closed'
+      'In progress', 'Waiting Reply', 'Waiting Reply from Airline', 'Waiting Reply from Stakeholder', 'Waiting Reply Internal', 
+      'Parked', 'Jira Parked Dev', 'Paused', 'Rejected', 'Done', 'Closed'
     ];
 
     let currentEditNoteId = null;
     let currentOpenTicketId = null;
     let sidebarOpen = true;
 
+    // --- TAB DRAG-TO-SCROLL LOGIC ---
+    const tabsContainer = document.getElementById('tabsContainer');
+    let isDown = false; let startX; let scrollLeft;
+    tabsContainer.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - tabsContainer.offsetLeft; scrollLeft = tabsContainer.scrollLeft; });
+    tabsContainer.addEventListener('mouseleave', () => { isDown = false; });
+    tabsContainer.addEventListener('mouseup', () => { isDown = false; });
+    tabsContainer.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - tabsContainer.offsetLeft;
+      const walk = (x - startX) * 2; 
+      tabsContainer.scrollLeft = scrollLeft - walk;
+    });
+
     // --- AUTHENTICATION LOGIC ---
     async function checkSession() {
       const { data: { session } } = await dbClient.auth.getSession();
       if (session) showApp(); else showLogin();
     }
-
     async function handleLogin() {
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
       const errorText = document.getElementById('loginError');
       const btn = document.getElementById('loginBtn');
       if (!email || !password) return;
-      btn.innerText = "Signing in...";
-      errorText.classList.add('hidden');
+      btn.innerText = "Signing in..."; errorText.classList.add('hidden');
       const { data, error } = await dbClient.auth.signInWithPassword({ email, password });
       if (error) { errorText.innerText = error.message; errorText.classList.remove('hidden'); btn.innerText = "Sign In"; } 
       else { document.getElementById('loginEmail').value = ''; document.getElementById('loginPassword').value = ''; btn.innerText = "Sign In"; showApp(); }
     }
-
     async function handleLogout() { await dbClient.auth.signOut(); showLogin(); }
     function showApp() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appWorkspace').classList.remove('hidden'); fetchTickets(); }
     function showLogin() { document.getElementById('appWorkspace').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
@@ -287,7 +287,6 @@
       sidebar.classList.toggle('border-r', sidebarOpen);
     }
     
-    // --- DYNAMIC FORM ROWS LOGIC ---
     function addDynamicRow(containerId, type, data = {}) {
         const container = document.getElementById(containerId);
         const row = document.createElement('div');
@@ -315,22 +314,14 @@
         const results = [];
         for(let i=0; i<rows.length; i++) {
             if(type === 'jira') {
-                results.push({
-                    id: rows[i].querySelector('.dyn-id').value,
-                    subj: rows[i].querySelector('.dyn-subj').value,
-                    link: rows[i].querySelector('.dyn-link').value
-                });
+                results.push({ id: rows[i].querySelector('.dyn-id').value, subj: rows[i].querySelector('.dyn-subj').value, link: rows[i].querySelector('.dyn-link').value });
             } else {
-                results.push({
-                    title: rows[i].querySelector('.dyn-title').value,
-                    link: rows[i].querySelector('.dyn-link').value
-                });
+                results.push({ title: rows[i].querySelector('.dyn-title').value, link: rows[i].querySelector('.dyn-link').value });
             }
         }
         return JSON.stringify(results);
     }
     
-    // --- MEDIA HANDLING ---
     function handleImagePaste(e) {
       const items = (e.clipboardData || e.originalEvent.clipboardData).items;
       for (let index in items) {
@@ -342,15 +333,13 @@
         }
       }
     }
-
     function handleFileUpload(e) {
       const file = e.target.files[0];
       if(!file) return;
       const txt = document.getElementById('newUpdateText');
       readBlobToNote(file, txt);
-      e.target.value = ''; // Reset input
+      e.target.value = ''; 
     }
-
     function readBlobToNote(blob, textElement) {
       const reader = new FileReader();
       reader.onload = function(event) {
@@ -359,7 +348,6 @@
       };
       reader.readAsDataURL(blob);
     }
-    
     function insertMarkdown(type) {
       const textarea = document.getElementById('newUpdateText');
       if (type === 'link') textarea.value += ` [Link Text](https://...)`;
@@ -370,7 +358,7 @@
     function openNewTicketModal() { 
         document.getElementById('newJiraContainer').innerHTML = '';
         document.getElementById('newShelfContainer').innerHTML = '';
-        addDynamicRow('newJiraContainer', 'jira'); // Add one blank by default
+        addDynamicRow('newJiraContainer', 'jira'); 
         addDynamicRow('newShelfContainer', 'shelf'); 
         document.getElementById('newTicketModal').classList.remove('hidden'); 
     }
@@ -384,7 +372,6 @@
       const shelfCont = document.getElementById('editShelfContainer');
       jiraCont.innerHTML = ''; shelfCont.innerHTML = '';
       
-      // Parse safely to populate modal
       try {
           const jiras = t.jira_id.startsWith('[') ? JSON.parse(t.jira_id) : [{id: t.jira_id, link: t.ticket_link, subj: t.subject}];
           jiras.forEach(j => addDynamicRow('editJiraContainer', 'jira', j));
@@ -403,15 +390,13 @@
       document.getElementById('editTicketModal').classList.remove('hidden');
     }
     function closeEditTicketModal() { document.getElementById('editTicketModal').classList.add('hidden'); }
-    function openEditNoteModal(noteId, encodedText) { currentEditNoteId = noteId; document.getElementById('editNoteText').value = decodeURIComponent(encodedText); document.getElementById('editNoteModal').classList.remove('hidden'); }
-    function closeEditNoteModal() { document.getElementById('editNoteModal').classList.add('hidden'); }
 
     document.getElementById('searchBar').addEventListener('input', renderTickets);
     function changeSort(val) { currentSort = val; renderTickets(); }
 
     function setTab(tabName, tabId) {
       currentTab = tabName;
-      ['tab-waiting', 'tab-parkeddev', 'tab-parked', 'tab-pause', 'tab-rejected', 'tab-finished'].forEach(id => {
+      ['tab-inprogress', 'tab-waiting', 'tab-parked', 'tab-finished', 'tab-rejected', 'tab-pause'].forEach(id => {
         const el = document.getElementById(id);
         if(id === tabId) { el.classList.add('border-amber-500', 'text-amber-500'); el.classList.remove('border-transparent', 'text-slate-400'); } 
         else { el.classList.remove('border-amber-500', 'text-amber-500'); el.classList.add('border-transparent', 'text-slate-400'); }
@@ -434,7 +419,7 @@
       let filtered = allTickets.filter(t => {
         const status = t.status || 'Waiting Reply'; 
         const searchString = `${t.jira_id} ${t.subject || ''} ${t.summary || ''} ${t.shelf_title || ''}`.toLowerCase();
-        return STATUS_MAP[currentTab].includes(status) && searchString.includes(searchTerm);
+        return STATUS_MAP[currentTab] && STATUS_MAP[currentTab].includes(status) && searchString.includes(searchTerm);
       });
 
       filtered.sort((a, b) => {
@@ -476,14 +461,15 @@
           else if (daysToDue <= 2) dueBadgeHtml = `<span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">Due Soon</span>`;
         }
         
-        // Quick parse for title
-        let displayTitle = "Legacy Ticket";
+        let displayTitle = t.jira_id;
+        let displaySubject = t.subject || '';
         try {
              if(t.jira_id.startsWith('[')) {
                  const parsed = JSON.parse(t.jira_id);
-                 displayTitle = parsed.map(j => j.id).join(', ');
-             } else displayTitle = t.jira_id;
-        } catch(e) { displayTitle = t.jira_id; }
+                 displayTitle = parsed.map(j => j.id).filter(Boolean).join(', ');
+                 displaySubject = parsed.map(j => j.subj).filter(Boolean).join(' | ');
+             }
+        } catch(e) {}
 
         return `
         <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:bg-slate-800 cursor-pointer transition-colors border-l-4 ${prioBorder} relative">
@@ -491,6 +477,7 @@
             <span class="text-slate-100 font-bold text-sm tracking-wide line-clamp-1">${displayTitle}</span>
             <span class="text-[10px] uppercase font-bold text-slate-500 mt-1 whitespace-nowrap">Last update: ${new Date(t.last_updated).toLocaleDateString()}</span>
           </div>
+          ${displaySubject ? `<p class="text-slate-300 text-sm font-semibold truncate mb-1">${displaySubject}</p>` : ''}
           <div class="flex justify-between items-center mt-2">
             <span class="inline-block px-2.5 py-1 text-[11px] font-bold uppercase rounded border ${badgeColor}">${t.status || 'Waiting Reply'}</span>
             <div class="flex gap-1">
@@ -584,7 +571,6 @@
                 <div class="text-xs font-bold uppercase tracking-wider text-slate-500">${new Date(u.created_at).toLocaleString()}</div>
                 <div class="opacity-0 group-hover:opacity-100 transition-opacity space-x-3">
                   <button onclick="toggleReplyBox('${u.id}')" class="text-xs text-emerald-400 hover:text-emerald-300">Reply</button>
-                  <button onclick="openEditNoteModal('${u.id}', '${encodeURIComponent(u.content || '')}')" class="text-xs text-blue-400 hover:text-blue-300">Edit</button>
                   <button onclick="deleteNote('${u.id}')" class="text-xs text-red-500 hover:text-red-400">Delete</button>
                 </div>
               </div>
@@ -599,7 +585,6 @@
             </div>
           `).join('') + `</div>`;
 
-      // Handle Dynamic Jira Rendering
       let headerDisplay = '';
       try {
           if(ticket.jira_id.startsWith('[')) {
@@ -615,7 +600,6 @@
           }
       } catch(e) { headerDisplay = `<div class="text-2xl font-bold text-slate-100 mb-2">${ticket.jira_id}</div>`; }
 
-      // Handle Dynamic Shelf Rendering
       let shelfHtml = '';
       try {
           if(ticket.shelf_title && ticket.shelf_title.startsWith('[')) {
@@ -678,12 +662,6 @@
       if (error) { alert("Error saving note: " + error.message); return; }
       await dbClient.from('tickets').update({ last_updated: new Date().toISOString() }).eq('id', ticketId);
       openTicket(ticketId); fetchTickets(); 
-    }
-
-    async function saveEditedNote() {
-      const newText = document.getElementById('editNoteText').value;
-      await dbClient.from('ticket_updates').update({ content: newText }).eq('id', currentEditNoteId);
-      closeEditNoteModal(); openTicket(currentOpenTicketId);
     }
     
     async function deleteNote(noteId) { if(confirm("Delete this note?")) { await dbClient.from('ticket_updates').delete().eq('id', noteId); openTicket(currentOpenTicketId); } }
