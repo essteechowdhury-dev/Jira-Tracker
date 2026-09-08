@@ -19,9 +19,7 @@
       <div class="text-center mb-6">
         <span class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg font-bold text-sm tracking-wide">Jira Workspace</span>
         <h2 class="text-2xl font-semibold mt-4 text-slate-100">Welcome Back</h2>
-        <p class="text-slate-400 text-sm mt-1">Please sign in to access your tracker.</p>
       </div>
-      
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Email</label>
@@ -37,7 +35,7 @@
     </div>
   </div>
 
-  <!-- 🚀 MAIN APP WORKSPACE (Hidden by default) -->
+  <!-- 🚀 MAIN APP WORKSPACE -->
   <div id="appWorkspace" class="hidden h-full flex flex-col">
     <!-- Header -->
     <header class="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between z-10 shadow-sm">
@@ -46,9 +44,7 @@
         <h1 class="text-xl font-semibold tracking-tight text-slate-200">Tracker Workspace</h1>
       </div>
       <div class="flex items-center space-x-4">
-        <button onclick="openNewTicketModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">
-          + New Ticket
-        </button>
+        <button onclick="openNewTicketModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">+ New Ticket</button>
         <button onclick="handleLogout()" class="text-slate-400 hover:text-slate-200 text-sm font-medium transition-colors">Sign Out</button>
       </div>
     </header>
@@ -57,15 +53,18 @@
     <div class="flex-1 flex overflow-hidden">
       
       <!-- Left Sidebar -->
-      <aside class="w-[26rem] border-r border-slate-800 bg-slate-900/50 flex flex-col">
+      <aside id="sidebar" class="w-[26rem] border-r border-slate-800 bg-slate-900/50 flex flex-col transition-all duration-300">
         <div class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs no-scrollbar">
           <button onclick="setTab('Ongoing', 'tab-ongoing')" id="tab-ongoing" class="px-4 py-3 font-semibold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap transition-colors">Ongoing</button>
           <button onclick="setTab('Parked Dev', 'tab-parkeddev')" id="tab-parkeddev" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked Dev</button>
           <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Parked</button>
           <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors">Finished</button>
         </div>
-        <div class="p-4 border-b border-slate-800">
-          <input type="text" id="searchBar" placeholder="Search Jiras..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-200 shadow-inner">
+        <div class="p-4 border-b border-slate-800 flex space-x-2">
+          <input type="text" id="searchBar" placeholder="Search Jiras..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-200 shadow-inner">
+          <button onclick="toggleSidebar()" class="bg-slate-800 border border-slate-700 p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:border-amber-500 transition-colors" title="Toggle Focus Mode">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+          </button>
         </div>
         <div id="ticketList" class="flex-1 overflow-y-auto divide-y divide-slate-800/60">
           <p class="text-slate-500 text-sm p-4 text-center">Loading tickets...</p>
@@ -83,12 +82,18 @@
 
   <!-- MODAL: Add Ticket -->
   <div id="newTicketModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <h3 class="text-lg font-medium text-slate-200 mb-4">Add New Jira Ticket</h3>
       <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Jira ID</label>
-          <input type="text" id="newJiraId" placeholder="e.g., OPPR-10515" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Jira ID</label>
+            <input type="text" id="newJiraId" placeholder="OPPR-10515" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Jira Link</label>
+            <input type="url" id="newTicketLink" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+          </div>
         </div>
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Subject</label>
@@ -96,11 +101,24 @@
         </div>
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Summary / Details</label>
-          <textarea id="newSummary" rows="2" placeholder="Additional details..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100 resize-none"></textarea>
+          <textarea id="newSummary" rows="2" placeholder="Full summary of the issue..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100 resize-none"></textarea>
+        </div>
+        
+        <hr class="border-slate-800 my-2">
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Shelf Page Title</label>
+            <input type="text" id="newShelfTitle" placeholder="e.g., Q3 Analytics" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Shelf Page Link</label>
+            <input type="url" id="newShelfLink" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+          </div>
         </div>
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Hyperlink (Optional)</label>
-          <input type="url" id="newTicketLink" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Remarks</label>
+          <input type="text" id="newRemark" placeholder="Any quick remarks?" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
         </div>
       </div>
       <div class="flex justify-end space-x-3 mt-6">
@@ -138,15 +156,12 @@
 
     let currentEditNoteId = null;
     let currentOpenTicketId = null;
+    let sidebarOpen = true;
 
     // --- AUTHENTICATION LOGIC ---
     async function checkSession() {
       const { data: { session } } = await dbClient.auth.getSession();
-      if (session) {
-        showApp();
-      } else {
-        showLogin();
-      }
+      if (session) showApp(); else showLogin();
     }
 
     async function handleLogin() {
@@ -154,54 +169,42 @@
       const password = document.getElementById('loginPassword').value;
       const errorText = document.getElementById('loginError');
       const btn = document.getElementById('loginBtn');
-
       if (!email || !password) return;
-
       btn.innerText = "Signing in...";
       errorText.classList.add('hidden');
-
       const { data, error } = await dbClient.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        errorText.innerText = error.message;
-        errorText.classList.remove('hidden');
-        btn.innerText = "Sign In";
-      } else {
-        document.getElementById('loginEmail').value = '';
-        document.getElementById('loginPassword').value = '';
-        btn.innerText = "Sign In";
-        showApp();
-      }
+      if (error) { errorText.innerText = error.message; errorText.classList.remove('hidden'); btn.innerText = "Sign In"; } 
+      else { document.getElementById('loginEmail').value = ''; document.getElementById('loginPassword').value = ''; btn.innerText = "Sign In"; showApp(); }
     }
 
-    async function handleLogout() {
-      await dbClient.auth.signOut();
-      showLogin();
+    async function handleLogout() { await dbClient.auth.signOut(); showLogin(); }
+    function showApp() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appWorkspace').classList.remove('hidden'); fetchTickets(); }
+    function showLogin() { document.getElementById('appWorkspace').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
+
+    // --- UI HELPERS ---
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebarOpen = !sidebarOpen;
+      sidebar.classList.toggle('hidden', !sidebarOpen);
+    }
+    
+    function insertMarkdown(type) {
+      const textarea = document.getElementById('newUpdateText');
+      if (type === 'link') textarea.value += ` [Link Text](https://...)`;
+      if (type === 'img') textarea.value += ` <img src="https://..." class="max-w-md rounded-lg mt-2 border border-slate-700">`;
+      textarea.focus();
     }
 
-    function showApp() {
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('appWorkspace').classList.remove('hidden');
-      fetchTickets(); // Only fetch data once we are safely logged in!
+    function replyToNote(noteId, textStr) {
+      const textarea = document.getElementById('newUpdateText');
+      textarea.value = `> Replying to note:\n> *"${decodeURIComponent(textStr).substring(0, 50)}..."*\n\n` + textarea.value;
+      textarea.focus();
     }
 
-    function showLogin() {
-      document.getElementById('appWorkspace').classList.add('hidden');
-      document.getElementById('loginScreen').classList.remove('hidden');
-      // Clear data from screen
-      document.getElementById('ticketList').innerHTML = '';
-      document.getElementById('workspace').innerHTML = '<div class="flex-1 flex items-center justify-center text-slate-500 p-8 text-center"><p>Select a Jira ticket from a folder on the left to view its timeline.</p></div>';
-    }
-
-    // --- APP LOGIC ---
+    // --- MODALS ---
     function openNewTicketModal() { document.getElementById('newTicketModal').classList.remove('hidden'); }
     function closeNewTicketModal() { document.getElementById('newTicketModal').classList.add('hidden'); }
-    
-    function openEditNoteModal(noteId, encodedText) {
-      currentEditNoteId = noteId;
-      document.getElementById('editNoteText').value = decodeURIComponent(encodedText);
-      document.getElementById('editNoteModal').classList.remove('hidden');
-    }
+    function openEditNoteModal(noteId, encodedText) { currentEditNoteId = noteId; document.getElementById('editNoteText').value = decodeURIComponent(encodedText); document.getElementById('editNoteModal').classList.remove('hidden'); }
     function closeEditNoteModal() { document.getElementById('editNoteModal').classList.add('hidden'); }
 
     document.getElementById('searchBar').addEventListener('input', renderTickets);
@@ -210,13 +213,8 @@
       currentTab = tabName;
       ['tab-ongoing', 'tab-parkeddev', 'tab-parked', 'tab-finished'].forEach(id => {
         const el = document.getElementById(id);
-        if(id === tabId) {
-          el.classList.add('border-amber-500', 'text-amber-500');
-          el.classList.remove('border-transparent', 'text-slate-400');
-        } else {
-          el.classList.remove('border-amber-500', 'text-amber-500');
-          el.classList.add('border-transparent', 'text-slate-400');
-        }
+        if(id === tabId) { el.classList.add('border-amber-500', 'text-amber-500'); el.classList.remove('border-transparent', 'text-slate-400'); } 
+        else { el.classList.remove('border-amber-500', 'text-amber-500'); el.classList.add('border-transparent', 'text-slate-400'); }
       });
       renderTickets();
     }
@@ -235,14 +233,11 @@
       
       const filtered = allTickets.filter(t => {
         const status = t.status || 'Waiting Reply'; 
-        const searchString = `${t.jira_id} ${t.subject || ''} ${t.summary || ''}`.toLowerCase();
+        const searchString = `${t.jira_id} ${t.subject || ''} ${t.summary || ''} ${t.shelf_title || ''}`.toLowerCase();
         return STATUS_MAP[currentTab].includes(status) && searchString.includes(searchTerm);
       });
 
-      if (filtered.length === 0) { 
-        list.innerHTML = `<p class="text-slate-500 text-sm p-4 text-center">No tickets found.</p>`; return; 
-      }
-      
+      if (filtered.length === 0) { list.innerHTML = `<p class="text-slate-500 text-sm p-4 text-center">No tickets found.</p>`; return; }
       const now = new Date(); 
 
       list.innerHTML = filtered.map(t => {
@@ -251,24 +246,15 @@
         if(t.status === 'In progress') badgeColor = "bg-blue-500/10 text-blue-400 border-blue-500/20";
         if(t.status === 'Jira Done' || t.status === 'Jira Closed') badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
 
-        const lastUpdateDate = new Date(t.last_updated);
-        const daysSinceUpdate = (now - lastUpdateDate) / (1000 * 60 * 60 * 24);
-        const isFinished = t.status === 'Jira Done' || t.status === 'Jira Closed';
-        const needsUpdate = daysSinceUpdate > 7 && !isFinished;
-
-        const jiraIdDisplay = t.ticket_link 
-          ? `<a href="${t.ticket_link}" target="_blank" onclick="event.stopPropagation();" title="Open Link" class="text-blue-400 hover:text-blue-300 hover:underline font-bold text-[15px] tracking-wide relative z-10 transition-colors">${t.jira_id} <span class="text-xs opacity-70 ml-0.5">↗</span></a>`
-          : `<span class="text-amber-500 font-bold text-sm tracking-wide">${t.jira_id}</span>`;
+        const needsUpdate = ((now - new Date(t.last_updated)) / (1000 * 60 * 60 * 24)) > 7 && !(t.status === 'Jira Done' || t.status === 'Jira Closed');
 
         return `
         <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:bg-slate-800 cursor-pointer transition-colors border-l-2 border-transparent hover:border-amber-500 relative">
           <div class="flex justify-between items-start mb-1">
-            ${jiraIdDisplay}
+            <span class="text-amber-500 font-bold text-sm tracking-wide">${t.jira_id}</span>
             <span class="text-[10px] uppercase font-bold text-slate-500 mt-1">${new Date(t.last_updated).toLocaleDateString()}</span>
           </div>
           ${t.subject ? `<p class="text-slate-200 text-sm font-semibold truncate mb-1">${t.subject}</p>` : ''}
-          ${t.summary ? `<p class="text-slate-400 text-xs truncate mb-2">${t.summary}</p>` : ''}
-          
           <div class="flex justify-between items-center mt-2">
             <span class="inline-block px-2.5 py-1 text-[11px] font-bold uppercase rounded border ${badgeColor}">${t.status || 'Waiting Reply'}</span>
             ${needsUpdate ? `<span class="text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-500/10 px-2 py-1 rounded border border-red-500/20">Update</span>` : ''}
@@ -278,39 +264,26 @@
     }
 
     async function createNewTicket() {
-      const jiraId = document.getElementById('newJiraId').value;
-      const subject = document.getElementById('newSubject').value;
-      const summary = document.getElementById('newSummary').value;
-      const ticketLink = document.getElementById('newTicketLink').value;
+      const insertData = {
+        jira_id: document.getElementById('newJiraId').value,
+        subject: document.getElementById('newSubject').value,
+        summary: document.getElementById('newSummary').value,
+        ticket_link: document.getElementById('newTicketLink').value,
+        shelf_title: document.getElementById('newShelfTitle').value,
+        shelf_link: document.getElementById('newShelfLink').value,
+        remark: document.getElementById('newRemark').value,
+        status: 'Waiting Reply'
+      };
       
-      if(!jiraId) return alert("Jira ID is required!");
+      if(!insertData.jira_id) return alert("Jira ID is required!");
       
-      const { error } = await dbClient.from('tickets').insert([{ 
-        jira_id: jiraId, 
-        subject: subject,
-        summary: summary, 
-        status: 'Waiting Reply',
-        ticket_link: ticketLink
-      }]);
-      
+      const { error } = await dbClient.from('tickets').insert([insertData]);
       if(error) { alert("Error: " + error.message); } else {
         closeNewTicketModal();
-        document.getElementById('newJiraId').value = '';
-        document.getElementById('newSubject').value = '';
-        document.getElementById('newSummary').value = '';
-        document.getElementById('newTicketLink').value = ''; 
+        ['newJiraId', 'newSubject', 'newSummary', 'newTicketLink', 'newShelfTitle', 'newShelfLink', 'newRemark'].forEach(id => document.getElementById(id).value = '');
         setTab('Ongoing', 'tab-ongoing');
         fetchTickets(); 
       }
-    }
-
-    async function deleteTicket(ticketId) {
-      if(!confirm("⚠️ Are you sure you want to PERMANENTLY delete this ticket and all its notes?")) return;
-      await dbClient.from('ticket_updates').delete().eq('ticket_id', ticketId);
-      await dbClient.from('tickets').delete().eq('id', ticketId);
-      
-      document.getElementById('workspace').innerHTML = `<div class="flex-1 flex items-center justify-center text-slate-500"><p>Ticket deleted successfully.</p></div>`;
-      fetchTickets();
     }
 
     async function openTicket(id) {
@@ -329,35 +302,40 @@
             <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl group relative">
               <div class="flex justify-between items-center mb-3">
                 <div class="text-xs font-bold uppercase tracking-wider text-slate-500">${new Date(u.created_at).toLocaleString()}</div>
-                <div class="opacity-0 group-hover:opacity-100 transition-opacity space-x-2">
+                <div class="opacity-0 group-hover:opacity-100 transition-opacity space-x-3">
+                  <button onclick="replyToNote('${u.id}', '${encodeURIComponent(u.content || '')}')" class="text-xs text-emerald-400 hover:text-emerald-300">Reply</button>
                   <button onclick="openEditNoteModal('${u.id}', '${encodeURIComponent(u.content || '')}')" class="text-xs text-blue-400 hover:text-blue-300">Edit</button>
                   <button onclick="deleteNote('${u.id}')" class="text-xs text-red-500 hover:text-red-400">Delete</button>
                 </div>
               </div>
-              <div class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">${u.content}</div>
+              <div class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed prose prose-invert max-w-none">${u.content}</div>
             </div>
           `).join('') + `</div>`;
 
-      const headerDisplay = ticket.ticket_link
-        ? `<a href="${ticket.ticket_link}" target="_blank" title="Open Link" class="hover:text-blue-400 hover:underline transition-colors flex items-center gap-2 w-fit">
-            ${ticket.jira_id}
-            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-          </a>`
-        : ticket.jira_id;
+      // Build Top Header UI
+      let shelfHtml = '';
+      if(ticket.shelf_title || ticket.shelf_link || ticket.remark) {
+        shelfHtml = `<div class="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 mt-4 flex items-center gap-4 text-sm">
+          ${ticket.shelf_title ? `<div><span class="text-slate-500 text-xs uppercase font-bold mr-2">Shelf:</span><a href="${ticket.shelf_link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold">${ticket.shelf_title}</a></div>` : ''}
+          ${ticket.remark ? `<div class="border-l border-slate-700 pl-4"><span class="text-slate-500 text-xs uppercase font-bold mr-2">Remark:</span><span class="text-slate-300">${ticket.remark}</span></div>` : ''}
+        </div>`;
+      }
 
       workspace.innerHTML = `
         <div class="flex flex-col h-full w-full">
           <div class="p-6 border-b border-slate-800 bg-slate-900 flex justify-between items-start">
-            <div class="max-w-2xl">
-              <h2 class="text-2xl font-bold text-slate-100 mb-2">${headerDisplay}</h2>
-              ${ticket.subject ? `<h3 class="text-lg font-semibold text-slate-200 mb-1">${ticket.subject}</h3>` : ''}
-              ${ticket.summary ? `<p class="text-slate-400 text-sm">${ticket.summary}</p>` : ''}
+            <div class="max-w-3xl flex-1 pr-6">
+              <div class="flex items-center gap-3 mb-2">
+                <h2 class="text-2xl font-bold text-slate-100">${ticket.ticket_link ? `<a href="${ticket.ticket_link}" target="_blank" class="hover:text-blue-400 hover:underline">${ticket.jira_id} ↗</a>` : ticket.jira_id}</h2>
+              </div>
+              ${ticket.subject ? `<h3 class="text-lg font-semibold text-slate-200 mb-2">${ticket.subject}</h3>` : ''}
+              ${ticket.summary ? `<div class="bg-slate-950/50 p-3 rounded border border-slate-800 text-slate-400 text-sm italic mb-2">${ticket.summary}</div>` : ''}
+              ${shelfHtml}
             </div>
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-3 shrink-0">
               <select onchange="updateStatus('${id}', this.value)" class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm font-medium text-slate-200 focus:outline-none focus:border-amber-500">
                 ${statusOptions.map(s => `<option value="${s}" ${ticket.status === s ? 'selected' : ''}>${s}</option>`).join('')}
               </select>
-              <button onclick="deleteTicket('${id}')" class="bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 px-3 py-2 rounded-lg text-sm transition-colors" title="Delete Ticket">🗑️</button>
             </div>
           </div>
           
@@ -366,7 +344,11 @@
           </div>
 
           <div class="p-6 border-t border-slate-800 bg-slate-900">
-            <textarea id="newUpdateText" rows="3" placeholder="Type your notes..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 mb-4 resize-none"></textarea>
+            <div class="flex gap-2 mb-2">
+               <button onclick="insertMarkdown('link')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition">🔗 Add Link</button>
+               <button onclick="insertMarkdown('img')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition">🖼️ Add Image</button>
+            </div>
+            <textarea id="newUpdateText" rows="3" placeholder="Type your notes here..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 mb-3 resize-none"></textarea>
             <div class="flex justify-end">
               <button onclick="addUpdate('${id}')" id="postBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg">Post Update</button>
             </div>
@@ -378,44 +360,25 @@
     async function addUpdate(ticketId) {
       const text = document.getElementById('newUpdateText').value;
       if (!text.trim()) return;
-      
       const { error } = await dbClient.from('ticket_updates').insert([{ ticket_id: ticketId, content: text }]);
       if (error) { alert("Error saving note: " + error.message); return; }
-
       await dbClient.from('tickets').update({ last_updated: new Date().toISOString() }).eq('id', ticketId);
-      openTicket(ticketId); 
-      fetchTickets(); 
+      openTicket(ticketId); fetchTickets(); 
     }
 
     async function saveEditedNote() {
       const newText = document.getElementById('editNoteText').value;
       await dbClient.from('ticket_updates').update({ content: newText }).eq('id', currentEditNoteId);
-      closeEditNoteModal();
-      openTicket(currentOpenTicketId);
+      closeEditNoteModal(); openTicket(currentOpenTicketId);
     }
+    
+    async function deleteNote(noteId) { if(confirm("Delete this note?")) { await dbClient.from('ticket_updates').delete().eq('id', noteId); openTicket(currentOpenTicketId); } }
+    async function updateStatus(ticketId, newStatus) { await dbClient.from('tickets').update({ status: newStatus, last_updated: new Date().toISOString() }).eq('id', ticketId); fetchTickets(); }
 
-    async function deleteNote(noteId) {
-      if(!confirm("Delete this note?")) return;
-      await dbClient.from('ticket_updates').delete().eq('id', noteId);
-      openTicket(currentOpenTicketId);
-    }
-
-    async function updateStatus(ticketId, newStatus) {
-      await dbClient.from('tickets').update({ status: newStatus, last_updated: new Date().toISOString() }).eq('id', ticketId);
-      fetchTickets(); 
-    }
-
-    // Initialize Database & Check Login
     window.onload = () => {
       if(SUPABASE_ANON_KEY) {
         dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // Listen for session changes (like staying logged in on refresh)
-        dbClient.auth.onAuthStateChange((event, session) => {
-          if (event === 'SIGNED_IN') showApp();
-          if (event === 'SIGNED_OUT') showLogin();
-        });
-        
+        dbClient.auth.onAuthStateChange((event, session) => { if (event === 'SIGNED_IN') showApp(); if (event === 'SIGNED_OUT') showLogin(); });
         checkSession();
       }
     };
