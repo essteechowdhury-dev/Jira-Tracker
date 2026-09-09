@@ -365,22 +365,6 @@
     let currentTab = 'Waiting Reply from Stakeholders';
     let currentSort = 'last_updated';
     let isFocusMode = false;
-    
-    // Comprehensive Status Mapping with Bulletproof Fallback
-    const STATUS_MAP = {
-      'Waiting Reply from Stakeholders': [
-        'Waiting Reply from Stakeholders', 
-        'Waiting Reply from Stakeholder', 
-        'Waiting Reply from Airline', 
-        'Waiting Reply', 
-        'Waiting reply', 
-        'In progress', 
-        'In Progress'
-      ],
-      'Waiting Reply Internal': ['Waiting Reply Internal', 'Waiting reply internal'],
-      'Parked': ['Parked', 'Jira Parked', 'Jira Parked Dev', 'Paused', 'Pause'],
-      'Finished': ['Done', 'Closed', 'Jira Done', 'Jira Closed', 'Rejected']
-    };
 
     const ALL_STATUS_OPTIONS = [
       'Waiting Reply from Stakeholders', 
@@ -393,6 +377,19 @@
 
     let currentEditNoteId = null;
     let currentOpenTicketId = null;
+
+    // --- BULLETPROOF TAB CATEGORIZATION ---
+    function getMappedTab(statusStr) {
+      if (!statusStr) return 'Waiting Reply from Stakeholders';
+      const s = String(statusStr).toLowerCase().trim();
+      
+      if (s.includes('internal')) return 'Waiting Reply Internal';
+      if (s.includes('park') || s.includes('pause')) return 'Parked';
+      if (s.includes('done') || s.includes('close') || s.includes('reject') || s.includes('finish')) return 'Finished';
+      
+      // Default fallback: map all other statuses to Stakeholders
+      return 'Waiting Reply from Stakeholders';
+    }
 
     // --- THEME LOGIC ---
     function initTheme() {
@@ -506,6 +503,41 @@
             }
         }
         return JSON.stringify(results);
+    }
+    
+    function handleImagePaste(e) {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.includes('image/')) {
+          e.preventDefault();
+          const blob = item.getAsFile();
+          readBlobToNote(blob, e.target);
+        }
+      }
+    }
+
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if(!file) return;
+      const txt = document.getElementById('newUpdateText');
+      readBlobToNote(file, txt);
+      e.target.value = ''; 
+    }
+
+    function readBlobToNote(blob, textElement) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const base64 = event.target.result;
+        textElement.value = textElement.value.substring(0, textElement.selectionStart) + `\n<img src="${base64}" class="max-w-md rounded-lg mt-2 border theme-border">\n` + textElement.value.substring(textElement.selectionEnd);
+      };
+      reader.readAsDataURL(blob);
+    }
+
+    function insertMarkdown(type) {
+      const textarea = document.getElementById('newUpdateText');
+      if (type === 'link') textarea.value += ` [Link Text](https://...)`;
+      textarea.focus();
     }
 
     // --- TEMPLATES LOGIC ---
@@ -655,12 +687,12 @@
       jiraCont.innerHTML = ''; shelfCont.innerHTML = '';
       
       try {
-          const jiras = t.jira_id.startsWith('[') ? JSON.parse(t.jira_id) : [{id: t.jira_id, link: t.ticket_link, subj: t.subject}];
+          const jiras = (typeof t.jira_id === 'string' && t.jira_id.startsWith('[')) ? JSON.parse(t.jira_id) : [{id: String(t.jira_id || ''), link: t.ticket_link, subj: t.subject}];
           jiras.forEach(j => addDynamicRow('editJiraContainer', 'jira', j));
-      } catch(e) { addDynamicRow('editJiraContainer', 'jira', {id: t.jira_id, subj: t.subject, link: t.ticket_link}); }
+      } catch(e) { addDynamicRow('editJiraContainer', 'jira', {id: String(t.jira_id || ''), subj: t.subject, link: t.ticket_link}); }
 
       try {
-          const shelves = (t.shelf_title && t.shelf_title.startsWith('[')) ? JSON.parse(t.shelf_title) : [{title: t.shelf_title, link: t.shelf_link}];
+          const shelves = (typeof t.shelf_title === 'string' && t.shelf_title.startsWith('[')) ? JSON.parse(t.shelf_title) : [{title: t.shelf_title, link: t.shelf_link}];
           shelves.forEach(s => { if(s.title || s.link) addDynamicRow('editShelfContainer', 'shelf', s) });
       } catch(e) { addDynamicRow('editShelfContainer', 'shelf', {title: t.shelf_title, link: t.shelf_link}); }
 
@@ -694,7 +726,10 @@
     async function fetchTickets() {
       if (!dbClient) return;
       const { data, error } = await dbClient.from('tickets').select('*');
-      if (error) { console.error(error.message); return; }
+      if (error) {
+        alert("Supabase Database Error: " + error.message);
+        return;
+      }
       allTickets = data || [];
       renderTickets();
     }
@@ -704,19 +739,20 @@
       const searchTerm = document.getElementById('searchBar').value.toLowerCase();
       
       let filtered = allTickets.filter(t => {
-        let status = t.status || 'Waiting Reply from Stakeholders';
+        const mappedTab = getMappedTab(t.status);
         
-        // Bulletproof Tab Mapping with Fallback to Stakeholders
-        let mappedTab = Object.keys(STATUS_MAP).find(tab => STATUS_MAP[tab].includes(status));
-        if (!mappedTab) mappedTab = 'Waiting Reply from Stakeholders';
+        let jiraIdStr = typeof t.jira_id === 'string' ? t.jira_id : JSON.stringify(t.jira_id || '');
+        let subjectStr = t.subject || '';
+        let summaryStr = t.summary || '';
+        let shelfStr = t.shelf_title || '';
 
-        const searchString = `${t.jira_id} ${t.subject || ''} ${t.summary || ''} ${t.shelf_title || ''}`.toLowerCase();
+        const searchString = `${jiraIdStr} ${subjectStr} ${summaryStr} ${shelfStr}`.toLowerCase();
         return mappedTab === currentTab && searchString.includes(searchTerm);
       });
 
       filtered.sort((a, b) => {
         if (currentSort === 'last_updated') return new Date(b.last_updated || 0) - new Date(a.last_updated || 0);
-        if (currentSort === 'alpha') return (a.jira_id || '').localeCompare(b.jira_id || '');
+        if (currentSort === 'alpha') return String(a.jira_id || '').localeCompare(String(b.jira_id || ''));
         if (currentSort === 'priority') {
           const p = { 'High': 3, 'Medium': 2, 'Low': 1 };
           return (p[b.priority] || 2) - (p[a.priority] || 2);
@@ -751,15 +787,23 @@
           else if (daysToDue <= 2) dueBadgeHtml = `<span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">Due Soon</span>`;
         }
         
-        let displayTitle = t.jira_id;
-        let displaySubject = t.subject || '';
+        let displayTitle = '';
+        let displaySubject = '';
+        let rawJira = t.jira_id;
+
         try {
-             if(t.jira_id.startsWith('[')) {
-                 const parsed = JSON.parse(t.jira_id);
-                 displayTitle = parsed.map(j => j.id).filter(Boolean).join(', ');
-                 displaySubject = parsed.map(j => j.subj).filter(Boolean).join(' | ') || t.subject || '';
-             }
-        } catch(e) {}
+          if (typeof rawJira === 'string' && rawJira.startsWith('[')) {
+            const parsed = JSON.parse(rawJira);
+            displayTitle = parsed.map(j => j.id).filter(Boolean).join(', ');
+            displaySubject = parsed.map(j => j.subj).filter(Boolean).join(' | ') || t.subject || '';
+          } else {
+            displayTitle = String(rawJira || '');
+            displaySubject = t.subject || '';
+          }
+        } catch(e) {
+          displayTitle = String(rawJira || '');
+          displaySubject = t.subject || '';
+        }
 
         return `
         <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:opacity-90 cursor-pointer transition-colors border-l-4 ${prioBorder} relative theme-panel">
@@ -878,9 +922,11 @@
 
       let idsHtml = '';
       let subjectsHtml = '';
+      let rawJira = ticket.jira_id;
+
       try {
-          if (ticket.jira_id.startsWith('[')) {
-              const jiras = JSON.parse(ticket.jira_id);
+          if (typeof rawJira === 'string' && rawJira.startsWith('[')) {
+              const jiras = JSON.parse(rawJira);
               idsHtml = jiras.map(j => j.link ? `<a href="${j.link}" target="_blank" class="hover:text-blue-400 hover:underline inline-flex items-center gap-1">${j.id} <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : j.id).join('<span class="theme-text-muted mx-2">|</span>');
               subjectsHtml = jiras.map(j => j.subj).filter(Boolean).join('<span class="theme-text-muted mx-2">|</span>') || ticket.subject || '';
           } else {
@@ -888,13 +934,13 @@
               subjectsHtml = ticket.subject || '';
           }
       } catch(e) {
-          idsHtml = ticket.jira_id;
+          idsHtml = String(ticket.jira_id || '');
           subjectsHtml = ticket.subject || '';
       }
 
       let shelfHtml = '';
       try {
-          if(ticket.shelf_title && ticket.shelf_title.startsWith('[')) {
+          if(ticket.shelf_title && typeof ticket.shelf_title === 'string' && ticket.shelf_title.startsWith('[')) {
               const shelves = JSON.parse(ticket.shelf_title);
               shelfHtml = shelves.filter(s => s.title || s.link).map(s => `<a href="${s.link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold block theme-card px-3 py-1.5 rounded border theme-border mb-1 w-fit">${s.title || 'Link'}</a>`).join('');
               if(shelfHtml) shelfHtml = `<div class="mt-4"><span class="theme-text-muted text-xs uppercase font-bold block mb-2">Shelf Pages:</span>${shelfHtml}</div>`;
