@@ -402,7 +402,7 @@
     // --- EMAILJS CREDENTIALS ---
     const EMAILJS_PUBLIC_KEY = "smCD1w7VHnktFY0fk";
     const EMAILJS_SERVICE_ID = "service_0eockfo";
-    const EMAILJS_TEMPLATE_ID = "template_hx0kubr"; 
+    const EMAILJS_TEMPLATE_ID = "template_hx0kubr";
 
     let dbClient = null;
     let allTickets = [];
@@ -456,6 +456,13 @@
       if (s.includes('park') || s.includes('pause')) return 'Parked';
       if (s.includes('done') || s.includes('close') || s.includes('reject') || s.includes('finish')) return 'Finished';
       return 'Waiting Reply from Stakeholders';
+    }
+
+    // --- HELPER: CHECK IF TICKET IS FINISHED ---
+    function isTicketFinished(statusStr) {
+      if (!statusStr) return false;
+      const s = String(statusStr).toLowerCase().trim();
+      return s.includes('done') || s.includes('close') || s.includes('reject') || s.includes('finish');
     }
 
     // --- THEME LOGIC ---
@@ -530,8 +537,8 @@
       const sentHistory = JSON.parse(localStorage.getItem('sent_email_reminders') || '{}');
 
       for (const t of allTickets) {
-        const isFinished = t.status === 'Done' || t.status === 'Closed' || (t.status && t.status.includes('Jira Done')) || t.status === 'Rejected';
-        if (isFinished) continue;
+        // EXCLUDE FINISHED/DONE/CLOSED/REJECTED TICKETS FROM ALL EMAIL REMINDERS
+        if (isTicketFinished(t.status)) continue;
 
         let jiraDisplay = t.jira_id;
         try {
@@ -893,15 +900,16 @@
       list.innerHTML = filtered.map(t => {
         let badgeColor = "theme-card theme-text-muted border theme-border";
         if(t.status && t.status.includes('Waiting')) badgeColor = "accent-bg-soft accent-text accent-border border";
-        if(t.status === 'Done' || t.status === 'Closed' || (t.status && t.status.includes('Jira Done'))) badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        if(isTicketFinished(t.status)) badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
 
         let prioBorder = 'border-transparent hover:accent-border';
         if (t.priority === 'High') prioBorder = 'border-red-500/80 hover:border-red-400';
         if (t.priority === 'Low') prioBorder = 'border-blue-500/80 hover:border-blue-400';
 
-        const isFinished = t.status === 'Done' || t.status === 'Closed' || (t.status && t.status.includes('Jira Done')) || t.status === 'Rejected';
+        // FINISHED TICKETS NEVER SHOW OVERDUE / UPDATE BADGES
+        const isFinished = isTicketFinished(t.status);
         const freqDays = t.update_frequency_days || 7;
-        const needsUpdate = ((now - new Date(t.last_updated)) / (1000 * 60 * 60 * 24)) > freqDays && !isFinished;
+        const needsUpdate = !isFinished && (((now - new Date(t.last_updated)) / (1000 * 60 * 60 * 24)) > freqDays);
 
         let dueBadgeHtml = '';
         if (t.due_date && !isFinished) {
