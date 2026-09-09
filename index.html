@@ -110,7 +110,7 @@
     }
     .ql-editor {
       min-height: 100px;
-      max-height: 35vh; /* Prevents editor from pushing the workspace out of bounds */
+      max-height: 35vh;
       overflow-y: auto;
     }
     .ql-stroke { stroke: var(--text-muted) !important; }
@@ -466,7 +466,6 @@
       return 'Waiting Reply from Stakeholders';
     }
 
-    // --- HELPER: CHECK IF TICKET IS FINISHED ---
     function isTicketFinished(statusStr) {
       if (!statusStr) return false;
       const s = String(statusStr).toLowerCase().trim();
@@ -486,7 +485,6 @@
       closeThemeModal();
     }
 
-    // --- FULL FOCUS (ZEN) MODE TOGGLE ---
     function toggleFocusView() {
       isFocusMode = !isFocusMode;
       const sidebar = document.getElementById('sidebar');
@@ -554,7 +552,6 @@
           }
         } catch(e) {}
 
-        // 1. Check 48-Hour Deadline Reminder
         if (t.due_date) {
           const hoursToDue = (new Date(t.due_date) - now) / (1000 * 60 * 60);
           const deadlineKey = `due_${t.id}_${t.due_date}`;
@@ -565,7 +562,6 @@
           }
         }
 
-        // 2. Check Update Alert Days Overdue Reminder
         const freqDays = t.update_frequency_days || 7;
         const daysSinceUpdate = (now - new Date(t.last_updated)) / (1000 * 60 * 60 * 24);
         const updateKey = `update_${t.id}_${t.last_updated}`;
@@ -614,6 +610,42 @@
     function showApp() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appWorkspace').classList.remove('hidden'); fetchTickets(); }
     function showLogin() { document.getElementById('appWorkspace').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
 
+    // --- UI HELPERS ---
+    function addDynamicRow(containerId, type, data = {}) {
+        const container = document.getElementById(containerId);
+        const row = document.createElement('div');
+        row.className = "flex gap-2 items-center theme-panel p-2 rounded border theme-border";
+        if(type === 'jira') {
+            row.innerHTML = `
+                <input type="text" placeholder="ID (e.g. OPPR-123)" value="${data.id || ''}" class="dyn-id w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="text" placeholder="Subject" value="${data.subj || ''}" class="dyn-subj w-2/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
+            `;
+        } else {
+            row.innerHTML = `
+                <input type="text" placeholder="Title" value="${data.title || ''}" class="dyn-title w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
+            `;
+        }
+        container.appendChild(row);
+    }
+
+    function extractDynamicData(containerId, type) {
+        const container = document.getElementById(containerId);
+        const rows = container.children;
+        const results = [];
+        for(let i=0; i<rows.length; i++) {
+            if(type === 'jira') {
+                results.push({ id: rows[i].querySelector('.dyn-id').value, subj: rows[i].querySelector('.dyn-subj').value, link: rows[i].querySelector('.dyn-link').value });
+            } else {
+                results.push({ title: rows[i].querySelector('.dyn-title').value, link: rows[i].querySelector('.dyn-link').value });
+            }
+        }
+        return JSON.stringify(results);
+    }
+
     // --- TEMPLATES LOGIC ---
     function getTemplates() {
       const stored = localStorage.getItem('saved_templates');
@@ -631,7 +663,6 @@
     function renderTemplatesModal() {
       const container = document.getElementById('templatesContainer');
       const tpls = getTemplates();
-      quillInstances['templates'] = {};
       
       container.innerHTML = tpls.map((t) => `
         <div class="theme-panel border theme-border rounded-lg p-4 relative group">
@@ -642,14 +673,14 @@
               <button onclick="deleteTemplateSpace('${t.id}')" class="text-red-500 hover:text-red-400 font-bold px-2 py-1 text-sm" title="Delete Space">✕</button>
             </div>
           </div>
-          <div id="editor-tpl-${t.id}"></div>
+          <div id="editor-tpl-${t.id}" class="min-h-[160px]"></div>
         </div>
       `).join('');
 
       tpls.forEach(t => {
         const q = createQuillEditor('#editor-tpl-' + t.id, 'Type template content...', t.content);
         if(q) {
-          quillInstances['templates'][t.id] = q;
+          quillInstances[`tpl-${t.id}`] = q;
           q.on('text-change', () => {
             updateTemplateContent(t.id, q.root.innerHTML);
           });
@@ -785,10 +816,15 @@
         addDynamicRow('newShelfContainer', 'shelf'); 
         
         document.getElementById('newTicketModal').classList.remove('hidden'); 
-        if (quillInstances['newSummary']) {
+        
+        // SAFELY INITIALIZE QUILL AFTER MODAL IS VISIBLE
+        if (!quillInstances['newSummary']) {
+          quillInstances['newSummary'] = createQuillEditor('#newSummaryEditor', 'Overall summary or ticket details...');
+        } else {
           quillInstances['newSummary'].root.innerHTML = '';
         }
     }
+    
     function closeNewTicketModal() { document.getElementById('newTicketModal').classList.add('hidden'); }
     
     function openEditTicketModal() {
@@ -815,7 +851,11 @@
       document.getElementById('editRemark').value = t.remark || '';
 
       document.getElementById('editTicketModal').classList.remove('hidden');
-      if (quillInstances['editSummary']) {
+      
+      // SAFELY INITIALIZE QUILL AFTER MODAL IS VISIBLE
+      if (!quillInstances['editSummary']) {
+        quillInstances['editSummary'] = createQuillEditor('#editSummaryEditor', 'Summary details...', t.summary || '');
+      } else {
         quillInstances['editSummary'].root.innerHTML = t.summary || '';
       }
     }
@@ -825,7 +865,11 @@
       currentEditNoteId = noteId; 
       const htmlText = decodeURIComponent(encodedText);
       document.getElementById('editNoteModal').classList.remove('hidden'); 
-      if (quillInstances['editNote']) {
+      
+      // SAFELY INITIALIZE QUILL AFTER MODAL IS VISIBLE
+      if (!quillInstances['editNote']) {
+        quillInstances['editNote'] = createQuillEditor('#editNoteEditor', 'Edit note content...', htmlText);
+      } else {
         quillInstances['editNote'].root.innerHTML = htmlText;
       }
     }
@@ -1056,7 +1100,6 @@
               <div class="theme-text-main text-sm whitespace-pre-wrap leading-relaxed prose prose-invert max-w-none break-words overflow-hidden">${u.content}</div>
               
               <div id="replyBox-${u.id}" class="hidden mt-4 pl-4 border-l-2 theme-border space-y-2">
-                <!-- REPLIED MOVED UP -->
                 <div class="flex items-center justify-between mt-2 mb-1">
                   <span class="text-xs text-emerald-500 font-bold uppercase tracking-wider">↳ Reply</span>
                   <button onclick="submitReply('${u.id}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded text-xs font-bold hover:bg-emerald-500/30 transition-colors">Submit Reply</button>
@@ -1138,7 +1181,7 @@
             ${updatesHtml}
           </div>
 
-          <!-- Post Update Box with WYSIWYG Editor (BUTTON AT TOP) -->
+          <!-- Post Update Box with WYSIWYG Editor -->
           <div class="p-4 sm:p-5 border-t theme-border theme-panel shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
             <div class="flex items-center justify-between mb-2">
                <span class="text-[11px] theme-text-muted italic hidden sm:block">Add a comment... (Ctrl+V to paste images directly)</span>
@@ -1175,11 +1218,6 @@
       initTheme();
       initEmailJS();
       
-      // Initialize persistent modal editors ONCE to avoid duplicate toolbar crashing issues
-      quillInstances['newSummary'] = createQuillEditor('#newSummaryEditor', 'Overall summary or ticket details...');
-      quillInstances['editSummary'] = createQuillEditor('#editSummaryEditor', 'Summary details...');
-      quillInstances['editNote'] = createQuillEditor('#editNoteEditor', 'Edit note content...');
-
       if(SUPABASE_ANON_KEY) {
         dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         dbClient.auth.onAuthStateChange((event, session) => { if (event === 'SIGNED_IN') showApp(); if (event === 'SIGNED_OUT') showLogin(); });
