@@ -437,6 +437,9 @@
     ];
 
     function createQuillEditor(selector, placeholder = '', initialHTML = '') {
+      const targetEl = document.querySelector(selector);
+      if (!targetEl) return null;
+      
       const q = new Quill(selector, {
         theme: 'snow',
         placeholder: placeholder,
@@ -537,7 +540,6 @@
       const sentHistory = JSON.parse(localStorage.getItem('sent_email_reminders') || '{}');
 
       for (const t of allTickets) {
-        // EXCLUDE FINISHED/DONE/CLOSED/REJECTED TICKETS FROM ALL EMAIL REMINDERS
         if (isTicketFinished(t.status)) continue;
 
         let jiraDisplay = t.jira_id;
@@ -641,10 +643,12 @@
 
       tpls.forEach(t => {
         const q = createQuillEditor('#editor-tpl-' + t.id, 'Type template content...', t.content);
-        quillInstances['templates'][t.id] = q;
-        q.on('text-change', () => {
-          updateTemplateContent(t.id, q.root.innerHTML);
-        });
+        if (q) {
+          quillInstances['templates'][t.id] = q;
+          q.on('text-change', () => {
+            updateTemplateContent(t.id, q.root.innerHTML);
+          });
+        }
       });
     }
 
@@ -776,11 +780,9 @@
         addDynamicRow('newShelfContainer', 'shelf'); 
         
         document.getElementById('newTicketModal').classList.remove('hidden'); 
-        if(!quillInstances['newSummary']) {
-          quillInstances['newSummary'] = createQuillEditor('#newSummaryEditor', 'Overall summary or ticket details...');
-        } else {
-          quillInstances['newSummary'].root.innerHTML = '';
-        }
+        const editorContainer = document.getElementById('newSummaryEditor');
+        editorContainer.innerHTML = '';
+        quillInstances['newSummary'] = createQuillEditor('#newSummaryEditor', 'Overall summary or ticket details...');
     }
     function closeNewTicketModal() { document.getElementById('newTicketModal').classList.add('hidden'); }
     
@@ -808,11 +810,9 @@
       document.getElementById('editRemark').value = t.remark || '';
 
       document.getElementById('editTicketModal').classList.remove('hidden');
-      if(!quillInstances['editSummary']) {
-        quillInstances['editSummary'] = createQuillEditor('#editSummaryEditor', 'Summary details...', t.summary || '');
-      } else {
-        quillInstances['editSummary'].root.innerHTML = t.summary || '';
-      }
+      const editorContainer = document.getElementById('editSummaryEditor');
+      editorContainer.innerHTML = '';
+      quillInstances['editSummary'] = createQuillEditor('#editSummaryEditor', 'Summary details...', t.summary || '');
     }
     function closeEditTicketModal() { document.getElementById('editTicketModal').classList.add('hidden'); }
     
@@ -820,11 +820,9 @@
       currentEditNoteId = noteId; 
       const htmlText = decodeURIComponent(encodedText);
       document.getElementById('editNoteModal').classList.remove('hidden'); 
-      if(!quillInstances['editNote']) {
-        quillInstances['editNote'] = createQuillEditor('#editNoteEditor', 'Edit note content...', htmlText);
-      } else {
-        quillInstances['editNote'].root.innerHTML = htmlText;
-      }
+      const editorContainer = document.getElementById('editNoteEditor');
+      editorContainer.innerHTML = '';
+      quillInstances['editNote'] = createQuillEditor('#editNoteEditor', 'Edit note content...', htmlText);
     }
     function closeEditNoteModal() { document.getElementById('editNoteModal').classList.add('hidden'); }
 
@@ -906,7 +904,6 @@
         if (t.priority === 'High') prioBorder = 'border-red-500/80 hover:border-red-400';
         if (t.priority === 'Low') prioBorder = 'border-blue-500/80 hover:border-blue-400';
 
-        // FINISHED TICKETS NEVER SHOW OVERDUE / UPDATE BADGES
         const isFinished = isTicketFinished(t.status);
         const freqDays = t.update_frequency_days || 7;
         const needsUpdate = !isFinished && (((now - new Date(t.last_updated)) / (1000 * 60 * 60 * 24)) > freqDays);
@@ -1012,7 +1009,9 @@
     function toggleReplyBox(id) { 
       const replyBox = document.getElementById(`replyBox-${id}`);
       replyBox.classList.toggle('hidden'); 
-      if(!replyBox.classList.contains('hidden') && !quillInstances[`reply-${id}`]) {
+      if(!replyBox.classList.contains('hidden')) {
+        const editorContainer = document.getElementById(`replyEditor-${id}`);
+        editorContainer.innerHTML = '';
         quillInstances[`reply-${id}`] = createQuillEditor(`#replyEditor-${id}`, 'Type a reply to this thread...');
       }
     }
@@ -1145,6 +1144,8 @@
         </div>
       `;
 
+      const editorContainer = document.getElementById('postUpdateEditor');
+      editorContainer.innerHTML = '';
       quillInstances['postUpdate'] = createQuillEditor('#postUpdateEditor', 'Type your notes here...');
     }
 
