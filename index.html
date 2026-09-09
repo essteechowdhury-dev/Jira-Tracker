@@ -7,10 +7,56 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* Dynamic CSS Theme Variables */
+    :root {
+      --accent: #f59e0b;
+      --accent-hover: #fbbf24;
+      --accent-text: #f59e0b;
+      --accent-soft: rgba(245, 158, 11, 0.1);
+      --accent-border: rgba(245, 158, 11, 0.25);
+    }
+    .theme-emerald {
+      --accent: #10b981;
+      --accent-hover: #34d399;
+      --accent-text: #34d399;
+      --accent-soft: rgba(16, 185, 129, 0.1);
+      --accent-border: rgba(16, 185, 129, 0.25);
+    }
+    .theme-cyan {
+      --accent: #06b6d4;
+      --accent-hover: #22d3ee;
+      --accent-text: #38bdf8;
+      --accent-soft: rgba(6, 182, 212, 0.1);
+      --accent-border: rgba(6, 182, 212, 0.25);
+    }
+    .theme-purple {
+      --accent: #8b5cf6;
+      --accent-hover: #a78bfa;
+      --accent-text: #c084fc;
+      --accent-soft: rgba(139, 92, 246, 0.1);
+      --accent-border: rgba(139, 92, 246, 0.25);
+    }
+    .theme-rose {
+      --accent: #f43f5e;
+      --accent-hover: #fb7185;
+      --accent-text: #fb7185;
+      --accent-soft: rgba(244, 63, 94, 0.1);
+      --accent-border: rgba(244, 63, 94, 0.25);
+    }
+
+    /* Dynamic Theme Class Utilities */
+    .accent-bg { background-color: var(--accent) !important; color: #020617 !important; }
+    .accent-bg:hover { background-color: var(--accent-hover) !important; }
+    .accent-text { color: var(--accent-text) !important; }
+    .accent-border { border-color: var(--accent) !important; }
+    .accent-border-soft { border-color: var(--accent-border) !important; }
+    .accent-bg-soft { background-color: var(--accent-soft) !important; }
+
+    /* Custom visible scrollbar */
     .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -21,7 +67,7 @@
   <div id="loginScreen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-[100]">
     <div class="bg-slate-900 border border-slate-800 p-8 rounded-xl shadow-2xl max-w-sm w-full">
       <div class="text-center mb-6">
-        <span class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg font-bold text-sm tracking-wide">Jira Workspace</span>
+        <span class="accent-bg px-3 py-1 rounded-lg font-bold text-sm tracking-wide">Jira Workspace</span>
         <h2 class="text-2xl font-semibold mt-4 text-slate-100">Welcome Back</h2>
       </div>
       <div class="space-y-4">
@@ -34,7 +80,7 @@
           <input type="password" id="loginPassword" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-slate-100" onkeypress="if(event.key === 'Enter') handleLogin()">
         </div>
         <p id="loginError" class="text-red-500 text-xs hidden text-center font-medium"></p>
-        <button onclick="handleLogin()" id="loginBtn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 py-2.5 rounded-lg text-sm font-bold shadow-lg transition-colors mt-2">Sign In</button>
+        <button onclick="handleLogin()" id="loginBtn" class="w-full accent-bg py-2.5 rounded-lg text-sm font-bold shadow-lg transition-colors mt-2">Sign In</button>
       </div>
     </div>
   </div>
@@ -43,23 +89,25 @@
   <div id="appWorkspace" class="hidden h-full flex flex-col">
     <header class="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between z-10 shadow-sm">
       <div class="flex items-center space-x-3">
-        <div class="bg-amber-500 text-slate-950 p-2 rounded-lg font-bold text-sm">Jira</div>
+        <button onclick="toggleSidebar()" class="bg-slate-800 border border-slate-700 p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:border-amber-500 transition-colors" title="Toggle Sidebar View">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <div class="accent-bg p-2 rounded-lg font-bold text-sm">Jira</div>
         <h1 class="text-xl font-semibold tracking-tight text-slate-200 hidden sm:block">Tracker Workspace</h1>
       </div>
       <div class="flex items-center space-x-3">
-        <button onclick="toggleSidebar()" class="bg-slate-800 border border-slate-700 p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:border-amber-500 transition-colors" title="Toggle List">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-        </button>
+        <button onclick="openThemeModal()" class="bg-slate-800 border border-slate-700 p-2 rounded-lg text-slate-300 hover:text-white hover:border-amber-500 transition-colors" title="Change Theme">🎨 Theme</button>
         <button onclick="openTemplatesModal()" class="bg-indigo-600 hover:bg-indigo-500 text-slate-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">📝 Templates</button>
-        <button onclick="openNewTicketModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">+ New Ticket</button>
+        <button onclick="openNewTicketModal()" class="accent-bg px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">+ New Ticket</button>
         <button onclick="handleLogout()" class="text-slate-400 hover:text-slate-200 text-sm font-medium transition-colors hidden sm:block">Sign Out</button>
       </div>
     </header>
 
     <div class="flex-1 flex overflow-hidden relative">
-      <aside id="sidebar" class="w-full sm:w-[26rem] shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col z-20 h-full absolute sm:relative transition-all duration-300">
+      <!-- Left Sidebar Container -->
+      <aside id="sidebar" class="w-full sm:w-[26rem] shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col z-20 h-full transition-all duration-300">
         <div id="tabsContainer" class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs custom-scrollbar items-center pb-1">
-          <button onclick="setTab('Waiting Reply from Stakeholders', 'tab-waiting-ext')" id="tab-waiting-ext" class="px-4 py-3 font-semibold border-b-2 border-amber-500 text-amber-500 whitespace-nowrap transition-colors shrink-0">Waiting Reply (Stakeholders)</button>
+          <button onclick="setTab('Waiting Reply from Stakeholders', 'tab-waiting-ext')" id="tab-waiting-ext" class="px-4 py-3 font-semibold border-b-2 accent-border accent-text whitespace-nowrap transition-colors shrink-0">Waiting Reply (Stakeholders)</button>
           <button onclick="setTab('Waiting Reply Internal', 'tab-waiting-int')" id="tab-waiting-int" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Waiting Reply (Internal)</button>
           <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Parked</button>
           <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Finished</button>
@@ -81,6 +129,7 @@
         </div>
       </aside>
 
+      <!-- Main Workspace -->
       <main id="workspace" class="flex-1 flex flex-col bg-slate-950 h-full overflow-hidden w-full relative">
         <div class="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center">
           <svg class="w-16 h-16 mb-4 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -90,97 +139,56 @@
     </div>
   </div>
 
-  <!-- MODAL: TEMPLATES -->
+  <!-- MODAL: COLOR THEME SELECTOR -->
+  <div id="themeModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 z-[70]">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-bold text-slate-100">Select Accent Theme</h3>
+        <button onclick="closeThemeModal()" class="text-slate-400 hover:text-white font-bold">✕</button>
+      </div>
+      <div class="grid grid-cols-1 gap-3 mb-6">
+        <button onclick="applyTheme('')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
+          <span class="text-sm font-semibold text-slate-200">Amber Gold (Default)</span>
+          <span class="w-5 h-5 rounded-full bg-amber-500 inline-block"></span>
+        </button>
+        <button onclick="applyTheme('theme-emerald')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
+          <span class="text-sm font-semibold text-slate-200">Emerald Mint</span>
+          <span class="w-5 h-5 rounded-full bg-emerald-500 inline-block"></span>
+        </button>
+        <button onclick="applyTheme('theme-cyan')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
+          <span class="text-sm font-semibold text-slate-200">Cyber Cyan</span>
+          <span class="w-5 h-5 rounded-full bg-cyan-500 inline-block"></span>
+        </button>
+        <button onclick="applyTheme('theme-purple')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
+          <span class="text-sm font-semibold text-slate-200">Purple Neon</span>
+          <span class="w-5 h-5 rounded-full bg-violet-500 inline-block"></span>
+        </button>
+        <button onclick="applyTheme('theme-rose')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
+          <span class="text-sm font-semibold text-slate-200">Rose Pink</span>
+          <span class="w-5 h-5 rounded-full bg-rose-500 inline-block"></span>
+        </button>
+      </div>
+      <div class="flex justify-end">
+        <button onclick="closeThemeModal()" class="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-lg text-sm font-bold">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TEMPLATES WITH EDIT & ADD SUPPORT -->
   <div id="templatesModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
     <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl">
       <div class="flex justify-between items-center p-6 border-b border-slate-800">
         <div>
           <h3 class="text-xl font-bold text-slate-100">Saved Template Spaces</h3>
-          <p class="text-xs text-slate-400 mt-1">Copy rich content instantly for your Jira updates.</p>
+          <p class="text-xs text-slate-400 mt-1">Edit, create new template spaces, or copy content instantly.</p>
         </div>
-        <button onclick="closeTemplatesModal()" class="text-slate-400 hover:text-white p-2">✕</button>
+        <button onclick="closeTemplatesModal()" class="text-slate-400 hover:text-white p-2 text-lg font-bold">✕</button>
       </div>
-      <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-        
-        <!-- Template 1 -->
-        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
-          <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-            <h4 class="font-bold text-amber-500">Emails for Announcements</h4>
-            <button onclick="copyTemplate('tpl1')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded transition">Copy Text</button>
-          </div>
-          <textarea id="tpl1" readonly class="w-full h-48 bg-transparent text-slate-300 text-sm focus:outline-none resize-none custom-scrollbar">Emails: updateshelf-FL@etraveligroup.com & updateshelf-sl@etraveligroup.com
-
-Subject: ANN. Update or New: ____________
-
-Dear Team,
-
-Please release the announcement below to all FL and SL all, excluding __.
-
-Subject: ANN. Update or New: ____________
-
-Dear all,
-
-We have now updated the information on the Shelf page regarding the ___:
-
-___
-
-For more information, please check the relevant ___ shelf page.
-
-Thank you!</textarea>
-        </div>
-
-        <!-- Template 2 -->
-        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
-          <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-            <h4 class="font-bold text-amber-500">Shelf images</h4>
-            <button onclick="copyTemplate('tpl2')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded transition">Copy Text</button>
-          </div>
-          <textarea id="tpl2" readonly class="w-full h-32 bg-transparent text-slate-300 text-sm focus:outline-none resize-none custom-scrollbar">✅
-❌
-💡
-🚨 ATTENTION
-✈️ BLOG</textarea>
-        </div>
-
-        <!-- Template 3 -->
-        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
-          <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-            <h4 class="font-bold text-amber-500">Blog Posts</h4>
-            <button onclick="copyTemplate('tpl3')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded transition">Copy Text</button>
-          </div>
-          <textarea id="tpl3" readonly class="w-full h-48 bg-transparent text-slate-300 text-sm focus:outline-none resize-none custom-scrollbar">1. Add Blog image
-2. __. New/Update - __
-3. Information about __
-4. For FL,SC/SL
-5. Live on: __202.
-6. The information in this blog may change at any time post-blog creation date; always refer to the actual process/routine link provided for the most up-to-date information.
-
-Hello!
-
-___
-
-Useful links:___
-
-Thank you!
-
-Do not forget:
-1. Tags ➡️ blogpost, slblogpost or flblogpost
-Category ➡️ SL Blog Post or FL Blog Post</textarea>
-        </div>
-
-        <!-- Template 4 -->
-        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4">
-          <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-            <h4 class="font-bold text-amber-500">Process comments</h4>
-            <button onclick="copyTemplate('tpl4')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded transition">Copy Text</button>
-          </div>
-          <textarea id="tpl4" readonly class="w-full h-48 bg-transparent text-slate-300 text-sm focus:outline-none resize-none custom-scrollbar">• The Process team works on the process from the beginning of the project until release, taking notes, gathering questions, and joining calls to gain full visibility of the end-to-end flow. This ensures that accurate and complete process materials are provided to the Training team for agent training. Once all required information has been gathered, the Process team requires a minimum of three weeks prior to go-live to finalize the process, including approvals, alignment with all SMEs, and blog post creation.
-
-• Hello __! For any additional information or questions in regards to the existing process, kindly send an email to the Process group email (processes@etraveligroup.com) and the first available specialist will get back to you (the fastest way to get assistance). For any request to adjust an existing process or create a new one, a CSO Jira will need to be raised to the relevant gatekeepers as per latest alignment.</textarea>
-        </div>
-
+      <div id="templatesContainer" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+        <!-- Rendered dynamically -->
       </div>
-      <div class="p-6 border-t border-slate-800 flex justify-end">
+      <div class="p-6 border-t border-slate-800 flex justify-between items-center bg-slate-900/80">
+        <button onclick="addNewTemplateSpace()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition">+ Add Template Space</button>
         <button onclick="closeTemplatesModal()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-lg text-sm font-bold transition">Close</button>
       </div>
     </div>
@@ -194,7 +202,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
         <div class="bg-slate-950 p-4 rounded border border-slate-800">
            <div class="flex justify-between items-center mb-2">
              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Jira Links</label>
-             <button onclick="addDynamicRow('newJiraContainer', 'jira')" class="text-xs text-amber-500 hover:text-amber-400">+ Add Jira</button>
+             <button onclick="addDynamicRow('newJiraContainer', 'jira')" class="text-xs accent-text hover:underline">+ Add Jira</button>
            </div>
            <div id="newJiraContainer" class="space-y-2"></div>
         </div>
@@ -226,7 +234,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
         <div class="bg-slate-950 p-4 rounded border border-slate-800">
            <div class="flex justify-between items-center mb-2">
              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Shelf Pages</label>
-             <button onclick="addDynamicRow('newShelfContainer', 'shelf')" class="text-xs text-amber-500 hover:text-amber-400">+ Add Shelf</button>
+             <button onclick="addDynamicRow('newShelfContainer', 'shelf')" class="text-xs accent-text hover:underline">+ Add Shelf</button>
            </div>
            <div id="newShelfContainer" class="space-y-2"></div>
         </div>
@@ -238,7 +246,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
       </div>
       <div class="flex justify-end space-x-3 mt-6">
         <button onclick="closeNewTicketModal()" class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200">Cancel</button>
-        <button onclick="createNewTicket()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Save Ticket</button>
+        <button onclick="createNewTicket()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Save Ticket</button>
       </div>
     </div>
   </div>
@@ -254,7 +262,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
         <div class="bg-slate-950 p-4 rounded border border-slate-800">
            <div class="flex justify-between items-center mb-2">
              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Jira Links</label>
-             <button onclick="addDynamicRow('editJiraContainer', 'jira')" class="text-xs text-amber-500 hover:text-amber-400">+ Add Jira</button>
+             <button onclick="addDynamicRow('editJiraContainer', 'jira')" class="text-xs accent-text hover:underline">+ Add Jira</button>
            </div>
            <div id="editJiraContainer" class="space-y-2"></div>
         </div>
@@ -286,7 +294,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
         <div class="bg-slate-950 p-4 rounded border border-slate-800">
            <div class="flex justify-between items-center mb-2">
              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Shelf Pages</label>
-             <button onclick="addDynamicRow('editShelfContainer', 'shelf')" class="text-xs text-amber-500 hover:text-amber-400">+ Add Shelf</button>
+             <button onclick="addDynamicRow('editShelfContainer', 'shelf')" class="text-xs accent-text hover:underline">+ Add Shelf</button>
            </div>
            <div id="editShelfContainer" class="space-y-2"></div>
         </div>
@@ -298,7 +306,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
       </div>
       <div class="flex justify-end space-x-3 mt-6">
         <button onclick="closeEditTicketModal()" class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200">Cancel</button>
-        <button onclick="saveTicketEdits()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Save Changes</button>
+        <button onclick="saveTicketEdits()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Save Changes</button>
       </div>
     </div>
   </div>
@@ -310,7 +318,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
       <textarea id="editNoteText" rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 shadow-inner resize-none custom-scrollbar"></textarea>
       <div class="flex justify-end space-x-3 mt-4">
         <button onclick="closeEditNoteModal()" class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200">Cancel</button>
-        <button onclick="saveEditedNote()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Update Note</button>
+        <button onclick="saveEditedNote()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Update Note</button>
       </div>
     </div>
   </div>
@@ -326,15 +334,22 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
     let currentTab = 'Waiting Reply from Stakeholders';
     let currentSort = 'last_updated';
     
-    // UPDATED: Strict New Status Map 
+    // Status Mapping
     const STATUS_MAP = {
-      'Waiting Reply from Stakeholders': ['Waiting Reply from Stakeholders', 'Waiting Reply from Airline', 'Waiting Reply'],
-      'Waiting Reply Internal': ['Waiting Reply Internal'],
-      'Parked': ['Parked', 'Jira Parked', 'Jira Parked Dev'],
-      'Finished': ['Done', 'Closed', 'Jira Done', 'Jira Closed']
+      'Waiting Reply from Stakeholders': [
+        'Waiting Reply from Stakeholders', 
+        'Waiting Reply from Stakeholder', 
+        'Waiting Reply from Airline', 
+        'Waiting Reply', 
+        'Waiting reply', 
+        'In progress', 
+        'In Progress'
+      ],
+      'Waiting Reply Internal': ['Waiting Reply Internal', 'Waiting reply internal'],
+      'Parked': ['Parked', 'Jira Parked', 'Jira Parked Dev', 'Paused', 'Pause'],
+      'Finished': ['Done', 'Closed', 'Jira Done', 'Jira Closed', 'Rejected']
     };
 
-    // UPDATED: Cleaned Dropdown Select Options
     const ALL_STATUS_OPTIONS = [
       'Waiting Reply from Stakeholders', 
       'Waiting Reply Internal', 
@@ -347,6 +362,45 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
     let currentEditNoteId = null;
     let currentOpenTicketId = null;
     let sidebarOpen = true;
+
+    // --- THEME LOGIC ---
+    function initTheme() {
+      const savedTheme = localStorage.getItem('app_theme');
+      if (savedTheme) {
+        document.documentElement.className = 'h-full bg-slate-950 text-slate-100 ' + savedTheme;
+      }
+    }
+    function openThemeModal() { document.getElementById('themeModal').classList.remove('hidden'); }
+    function closeThemeModal() { document.getElementById('themeModal').classList.add('hidden'); }
+    function applyTheme(themeClass) {
+      document.documentElement.className = 'h-full bg-slate-950 text-slate-100 ' + themeClass;
+      localStorage.setItem('app_theme', themeClass);
+      closeThemeModal();
+    }
+
+    // --- DEFAULT TEMPLATES DATA ---
+    const DEFAULT_TEMPLATES = [
+      {
+        id: 'tpl-1',
+        title: 'Emails for Announcements',
+        content: `Emails: updateshelf-FL@etraveligroup.com & updateshelf-sl@etraveligroup.com\n\nSubject: ANN. Update or New: ____________\n\nDear Team,\n\nPlease release the announcement below to all FL and SL all, excluding __.\n\nSubject: ANN. Update or New: ____________\n\nDear all,\n\nWe have now updated the information on the Shelf page regarding the ___:\n\n___\n\nFor more information, please check the relevant ___ shelf page.\n\nThank you!`
+      },
+      {
+        id: 'tpl-2',
+        title: 'Shelf images',
+        content: `✅\n❌\n💡\n🚨 ATTENTION\n✈️ BLOG`
+      },
+      {
+        id: 'tpl-3',
+        title: 'Blog Posts',
+        content: `1. Add Blog image\n2. __. New/Update - __\n3. Information about __\n4. For FL,SC/SL\n5. Live on: __202.\n6. The information in this blog may change at any time post-blog creation date; always refer to the actual process/routine link provided for the most up-to-date information.\n\nHello!\n\n___\n\nUseful links:___\n\nThank you!\n\nDo not forget:\n1. Tags ➡️ blogpost, slblogpost or flblogpost\nCategory ➡️ SL Blog Post or FL Blog Post`
+      },
+      {
+        id: 'tpl-4',
+        title: 'Process comments',
+        content: `• The Process team works on the process from the beginning of the project until release, taking notes, gathering questions, and joining calls to gain full visibility of the end-to-end flow. This ensures that accurate and complete process materials are provided to the Training team for agent training. Once all required information has been gathered, the Process team requires a minimum of three weeks prior to go-live to finalize the process, including approvals, alignment with all SMEs, and blog post creation.\n\n• Hello __! For any additional information or questions in regards to the existing process, kindly send an email to the Process group email (processes@etraveligroup.com) and the first available specialist will get back to you (the fastest way to get assistance). For any request to adjust an existing process or create a new one, a CSO Jira will need to be raised to the relevant gatekeepers as per latest alignment.`
+      }
+    ];
 
     // --- AUTHENTICATION LOGIC ---
     async function checkSession() {
@@ -369,15 +423,10 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
     function showLogin() { document.getElementById('appWorkspace').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
 
     // --- UI HELPERS ---
-    // UPDATED: Sidebar now cleanly completely vanishes to show full-width workspace
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       sidebarOpen = !sidebarOpen;
-      if (!sidebarOpen) {
-          sidebar.classList.add('hidden');
-      } else {
-          sidebar.classList.remove('hidden');
-      }
+      sidebar.classList.toggle('hidden', !sidebarOpen);
     }
     
     function addDynamicRow(containerId, type, data = {}) {
@@ -448,11 +497,74 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
     }
 
     // --- TEMPLATES LOGIC ---
-    function openTemplatesModal() { document.getElementById('templatesModal').classList.remove('hidden'); }
+    function getTemplates() {
+      const stored = localStorage.getItem('saved_templates');
+      if(!stored) {
+        localStorage.setItem('saved_templates', JSON.stringify(DEFAULT_TEMPLATES));
+        return DEFAULT_TEMPLATES;
+      }
+      try { return JSON.parse(stored); } catch(e) { return DEFAULT_TEMPLATES; }
+    }
+
+    function saveTemplates(tpls) {
+      localStorage.setItem('saved_templates', JSON.stringify(tpls));
+      renderTemplatesModal();
+    }
+
+    function renderTemplatesModal() {
+      const container = document.getElementById('templatesContainer');
+      const tpls = getTemplates();
+      
+      container.innerHTML = tpls.map((t) => `
+        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 relative group">
+          <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3 gap-2">
+            <input type="text" value="${t.title}" onchange="updateTemplateField('${t.id}', 'title', this.value)" class="bg-transparent font-bold accent-text text-base focus:outline-none focus:border-b accent-border w-full">
+            <div class="flex items-center gap-2 shrink-0">
+              <button onclick="copyTemplateText('${t.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded transition">Copy Text</button>
+              <button onclick="deleteTemplateSpace('${t.id}')" class="text-red-500 hover:text-red-400 font-bold px-2 py-1 text-sm" title="Delete Space">✕</button>
+            </div>
+          </div>
+          <textarea id="tpl-val-${t.id}" onchange="updateTemplateField('${t.id}', 'content', this.value)" class="w-full h-44 bg-slate-900 border border-slate-800 rounded p-3 text-slate-200 text-sm focus:outline-none focus:border-amber-500 resize-y custom-scrollbar font-mono">${t.content}</textarea>
+        </div>
+      `).join('');
+    }
+
+    function openTemplatesModal() {
+      renderTemplatesModal();
+      document.getElementById('templatesModal').classList.remove('hidden');
+    }
     function closeTemplatesModal() { document.getElementById('templatesModal').classList.add('hidden'); }
-    function copyTemplate(id) {
-      const copyText = document.getElementById(id);
-      copyText.select();
+
+    function updateTemplateField(id, field, value) {
+      const tpls = getTemplates();
+      const item = tpls.find(x => x.id === id);
+      if(item) {
+        item[field] = value;
+        saveTemplates(tpls);
+      }
+    }
+
+    function addNewTemplateSpace() {
+      const tpls = getTemplates();
+      tpls.push({
+        id: 'tpl-' + Date.now(),
+        title: 'New Template Space',
+        content: 'Type your template here...'
+      });
+      saveTemplates(tpls);
+    }
+
+    function deleteTemplateSpace(id) {
+      if(!confirm("Are you sure you want to delete this template space?")) return;
+      let tpls = getTemplates();
+      tpls = tpls.filter(x => x.id !== id);
+      saveTemplates(tpls);
+    }
+
+    function copyTemplateText(id) {
+      const area = document.getElementById(`tpl-val-${id}`);
+      if(!area) return;
+      area.select();
       document.execCommand("copy");
       window.getSelection().removeAllRanges();
       alert("Template copied to clipboard!");
@@ -479,14 +591,24 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
         const notesText = (updates || []).map(u => u.content.replace(/<img[^>]*>/g, '')).join("\n\n");
         const promptText = `Summarize these Jira timeline notes into 1 or 2 concise, clear executive sentences:\n\n${notesText || ticket.subject || 'No notes available.'}`;
 
-        // Uses Google's newest 3.6-flash requirement
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+        // Uses active Gemini model endpoints
+        let response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
         });
 
-        const result = await response.json();
+        let result = await response.json();
+
+        // Fallback endpoint if 2.5-flash returns deprecation/404
+        if(result.error && result.error.code === 404) {
+           response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+          });
+          result = await response.json();
+        }
 
         if (result.error) {
           alert(`Google API Error (${result.error.code}): ${result.error.message}`);
@@ -498,7 +620,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
         if (aiSummary) {
           await dbClient.from('tickets').update({ summary: aiSummary.trim() }).eq('id', ticketId);
           fetchTickets();
-          openTicket(ticketId); // Reloads the ticket UI to show the new summary
+          openTicket(ticketId);
         } else {
           alert("Could not generate summary. Ensure the ticket has updates written.");
         }
@@ -555,8 +677,11 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
       currentTab = tabName;
       ['tab-waiting-ext', 'tab-waiting-int', 'tab-parked', 'tab-finished'].forEach(id => {
         const el = document.getElementById(id);
-        if(id === tabId) { el.classList.add('border-amber-500', 'text-amber-500'); el.classList.remove('border-transparent', 'text-slate-400'); } 
-        else { el.classList.remove('border-amber-500', 'text-amber-500'); el.classList.add('border-transparent', 'text-slate-400'); }
+        if(id === tabId) { 
+          el.className = "px-4 py-3 font-semibold border-b-2 accent-border accent-text whitespace-nowrap transition-colors shrink-0";
+        } else { 
+          el.className = "px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0";
+        }
       });
       renderTickets();
     }
@@ -598,7 +723,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
 
       list.innerHTML = filtered.map(t => {
         let badgeColor = "bg-slate-800 text-slate-400 border-slate-700";
-        if(t.status.includes('Waiting')) badgeColor = "bg-amber-500/10 text-amber-500 border-amber-500/20";
+        if(t.status.includes('Waiting')) badgeColor = "accent-bg-soft accent-text accent-border-soft";
         if(t.status === 'Done' || t.status === 'Closed' || t.status.includes('Jira Done')) badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
 
         let prioBorder = 'border-transparent hover:border-amber-500';
@@ -625,8 +750,6 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
                  displaySubject = parsed.map(j => j.subj).filter(Boolean).join(' | ') || t.subject || '';
              }
         } catch(e) {}
-        
-        let finalSubjectDisplay = displaySubject || '';
 
         return `
         <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:bg-slate-800 cursor-pointer transition-colors border-l-4 ${prioBorder} relative">
@@ -634,7 +757,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
             <span class="text-slate-100 font-bold text-sm tracking-wide line-clamp-1">${displayTitle}</span>
             <span class="text-[10px] uppercase font-bold text-slate-500 mt-1 whitespace-nowrap">Last update: ${new Date(t.last_updated).toLocaleDateString()}</span>
           </div>
-          ${finalSubjectDisplay ? `<p class="text-slate-300 text-sm font-semibold truncate mb-1">${finalSubjectDisplay}</p>` : ''}
+          ${displaySubject ? `<p class="text-slate-300 text-sm font-semibold truncate mb-1">${displaySubject}</p>` : ''}
           <div class="flex justify-between items-center mt-2">
             <span class="inline-block px-2.5 py-1 text-[11px] font-bold uppercase rounded border ${badgeColor} truncate max-w-[150px]" title="${t.status || 'Waiting Reply'}">${t.status || 'Waiting Reply'}</span>
             <div class="flex gap-1 shrink-0">
@@ -715,13 +838,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
     async function openTicket(id) {
       currentOpenTicketId = id;
       const workspace = document.getElementById('workspace');
-      workspace.innerHTML = `<div class="flex-1 flex items-center justify-center"><p class="text-amber-500 animate-pulse">Loading workspace...</p></div>`;
-
-      // Auto-hide sidebar on mobile when a ticket is clicked so the workspace is fully visible
-      if(window.innerWidth < 640) {
-          document.getElementById('sidebar').classList.add('hidden');
-          sidebarOpen = false;
-      }
+      workspace.innerHTML = `<div class="flex-1 flex items-center justify-center"><p class="accent-text animate-pulse">Loading workspace...</p></div>`;
 
       const { data: ticket } = await dbClient.from('tickets').select('*').eq('id', id).single();
       const { data: updates } = await dbClient.from('ticket_updates').select('*').eq('ticket_id', id).order('created_at', { ascending: true });
@@ -776,11 +893,10 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
           }
       } catch(e) { }
 
-      // PROMINENT AI SUMMARY BLOCK
       let aiSummaryBlock = ticket.summary ? `
-          <div class="mt-4 p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-lg">
+          <div class="mt-4 p-4 accent-bg-soft accent-border-soft border rounded-lg">
              <div class="flex items-center gap-2 mb-1">
-               <span class="text-indigo-400 text-[10px] font-bold uppercase tracking-widest">✨ AI Auto-Summary</span>
+               <span class="accent-text text-[10px] font-bold uppercase tracking-widest">✨ AI AUTO-SUMMARY</span>
              </div>
              <p class="text-slate-300 text-sm italic leading-relaxed">${ticket.summary}</p>
           </div>
@@ -791,7 +907,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
           <div class="p-6 border-b border-slate-800 bg-slate-900 flex flex-col sm:flex-row justify-between items-start gap-4">
             <div class="max-w-3xl flex-1 pr-0 sm:pr-6">
               <div class="flex gap-2 mb-3">
-                <span class="px-2 py-0.5 rounded text-xs font-bold border ${ticket.priority === 'High' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (ticket.priority === 'Low' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20')}">${ticket.priority || 'Medium'} Prio</span>
+                <span class="px-2 py-0.5 rounded text-xs font-bold border ${ticket.priority === 'High' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (ticket.priority === 'Low' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'accent-bg-soft accent-text accent-border-soft')}">${ticket.priority || 'Medium'} Prio</span>
                 ${ticket.due_date ? `<span class="px-2 py-0.5 rounded text-xs font-bold border bg-slate-800 text-slate-300 border-slate-700">Due: ${new Date(ticket.due_date).toLocaleDateString()}</span>` : ''}
               </div>
               
@@ -804,7 +920,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
 
               ${aiSummaryBlock}
               ${shelfHtml}
-              ${ticket.remark ? `<div class="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-amber-400 text-sm"><span class="font-bold uppercase tracking-wider mr-2 text-xs">Remark:</span>${ticket.remark}</div>` : ''}
+              ${ticket.remark ? `<div class="mt-4 accent-bg-soft accent-border-soft border rounded-lg p-3 accent-text text-sm"><span class="font-bold uppercase tracking-wider mr-2 text-xs">Remark:</span>${ticket.remark}</div>` : ''}
             </div>
             
             <div class="flex flex-row sm:flex-col items-end space-x-3 sm:space-x-0 sm:space-y-3 shrink-0 w-full sm:w-auto">
@@ -829,7 +945,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
             </div>
             <textarea id="newUpdateText" rows="3" placeholder="Type your notes here..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 mb-3 resize-none custom-scrollbar"></textarea>
             <div class="flex justify-end">
-              <button onclick="addUpdate('${id}')" id="postBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg w-full sm:w-auto">Post Update</button>
+              <button onclick="addUpdate('${id}')" id="postBtn" class="accent-bg px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg w-full sm:w-auto">Post Update</button>
             </div>
           </div>
         </div>
@@ -850,6 +966,7 @@ Category ➡️ SL Blog Post or FL Blog Post</textarea>
     async function updateStatus(ticketId, newStatus) { await dbClient.from('tickets').update({ status: newStatus, last_updated: new Date().toISOString() }).eq('id', ticketId); fetchTickets(); }
 
     window.onload = () => {
+      initTheme();
       if(SUPABASE_ANON_KEY) {
         dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         dbClient.auth.onAuthStateChange((event, session) => { if (event === 'SIGNED_IN') showApp(); if (event === 'SIGNED_OUT') showLogin(); });
