@@ -110,7 +110,7 @@
     }
     .ql-editor {
       min-height: 100px;
-      max-height: 35vh; /* Prevents editor from pushing the Post button off-screen */
+      max-height: 35vh; /* Prevents editor from pushing the workspace out of bounds */
       overflow-y: auto;
     }
     .ql-stroke { stroke: var(--text-muted) !important; }
@@ -305,7 +305,6 @@
 
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Overall Summary / Details</label>
-          <!-- FIXED QUILL CONTAINER -->
           <div id="newSummaryEditor"></div>
         </div>
         
@@ -322,9 +321,9 @@
           <input type="text" id="newRemark" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
         </div>
       </div>
-      <div class="flex justify-end space-x-3 mt-6">
+      <div class="flex justify-end space-x-3 mt-6 pt-4 border-t theme-border">
         <button onclick="closeNewTicketModal()" class="px-4 py-2 text-sm font-medium theme-text-muted hover:theme-text-main">Cancel</button>
-        <button onclick="createNewTicket()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Save Ticket</button>
+        <button onclick="createNewTicket()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:opacity-90">Save Ticket</button>
       </div>
     </div>
   </div>
@@ -366,7 +365,6 @@
 
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Overall Summary / Details</label>
-          <!-- FIXED QUILL CONTAINER -->
           <div id="editSummaryEditor"></div>
         </div>
         
@@ -383,9 +381,9 @@
           <input type="text" id="editRemark" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
         </div>
       </div>
-      <div class="flex justify-end space-x-3 mt-6">
+      <div class="flex justify-end space-x-3 mt-6 pt-4 border-t theme-border">
         <button onclick="closeEditTicketModal()" class="px-4 py-2 text-sm font-medium theme-text-muted hover:theme-text-main">Cancel</button>
-        <button onclick="saveTicketEdits()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Save Changes</button>
+        <button onclick="saveTicketEdits()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:opacity-90">Save Changes</button>
       </div>
     </div>
   </div>
@@ -394,11 +392,10 @@
   <div id="editNoteModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="theme-panel border theme-border rounded-xl max-w-2xl w-full p-6 shadow-2xl">
       <h3 class="text-lg font-medium theme-text-main mb-4">Edit Note</h3>
-      <!-- FIXED QUILL CONTAINER -->
       <div id="editNoteEditor"></div>
-      <div class="flex justify-end space-x-3 mt-4">
+      <div class="flex justify-end space-x-3 mt-4 pt-4 border-t theme-border">
         <button onclick="closeEditNoteModal()" class="px-4 py-2 text-sm font-medium theme-text-muted hover:theme-text-main">Cancel</button>
-        <button onclick="saveEditedNote()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Update Note</button>
+        <button onclick="saveEditedNote()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg hover:opacity-90">Update Note</button>
       </div>
     </div>
   </div>
@@ -617,42 +614,6 @@
     function showApp() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appWorkspace').classList.remove('hidden'); fetchTickets(); }
     function showLogin() { document.getElementById('appWorkspace').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
 
-    // --- UI HELPERS ---
-    function addDynamicRow(containerId, type, data = {}) {
-        const container = document.getElementById(containerId);
-        const row = document.createElement('div');
-        row.className = "flex gap-2 items-center theme-panel p-2 rounded border theme-border";
-        if(type === 'jira') {
-            row.innerHTML = `
-                <input type="text" placeholder="ID (e.g. OPPR-123)" value="${data.id || ''}" class="dyn-id w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <input type="text" placeholder="Subject" value="${data.subj || ''}" class="dyn-subj w-2/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
-            `;
-        } else {
-            row.innerHTML = `
-                <input type="text" placeholder="Title" value="${data.title || ''}" class="dyn-title w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
-            `;
-        }
-        container.appendChild(row);
-    }
-
-    function extractDynamicData(containerId, type) {
-        const container = document.getElementById(containerId);
-        const rows = container.children;
-        const results = [];
-        for(let i=0; i<rows.length; i++) {
-            if(type === 'jira') {
-                results.push({ id: rows[i].querySelector('.dyn-id').value, subj: rows[i].querySelector('.dyn-subj').value, link: rows[i].querySelector('.dyn-link').value });
-            } else {
-                results.push({ title: rows[i].querySelector('.dyn-title').value, link: rows[i].querySelector('.dyn-link').value });
-            }
-        }
-        return JSON.stringify(results);
-    }
-
     // --- TEMPLATES LOGIC ---
     function getTemplates() {
       const stored = localStorage.getItem('saved_templates');
@@ -670,6 +631,7 @@
     function renderTemplatesModal() {
       const container = document.getElementById('templatesContainer');
       const tpls = getTemplates();
+      quillInstances['templates'] = {};
       
       container.innerHTML = tpls.map((t) => `
         <div class="theme-panel border theme-border rounded-lg p-4 relative group">
@@ -687,7 +649,7 @@
       tpls.forEach(t => {
         const q = createQuillEditor('#editor-tpl-' + t.id, 'Type template content...', t.content);
         if(q) {
-          quillInstances[`tpl-${t.id}`] = q;
+          quillInstances['templates'][t.id] = q;
           q.on('text-change', () => {
             updateTemplateContent(t.id, q.root.innerHTML);
           });
@@ -1094,10 +1056,12 @@
               <div class="theme-text-main text-sm whitespace-pre-wrap leading-relaxed prose prose-invert max-w-none break-words overflow-hidden">${u.content}</div>
               
               <div id="replyBox-${u.id}" class="hidden mt-4 pl-4 border-l-2 theme-border space-y-2">
-                <div id="replyEditor-${u.id}" class="min-h-[80px]"></div>
-                <div class="flex justify-end mt-2">
+                <!-- REPLIED MOVED UP -->
+                <div class="flex items-center justify-between mt-2 mb-1">
+                  <span class="text-xs text-emerald-500 font-bold uppercase tracking-wider">↳ Reply</span>
                   <button onclick="submitReply('${u.id}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded text-xs font-bold hover:bg-emerald-500/30 transition-colors">Submit Reply</button>
                 </div>
+                <div id="replyEditor-${u.id}"></div>
               </div>
             </div>
           `).join('') + `</div>`;
@@ -1141,7 +1105,7 @@
       ` : '';
 
       workspace.innerHTML = `
-        <div class="flex flex-col h-full w-full overflow-hidden">
+        <div class="flex flex-col h-full w-full overflow-hidden relative">
           <!-- Ticket Details Meta Banner -->
           <div id="ticketMetaHeader" class="${isFocusMode ? 'hidden' : ''} shrink-0 p-6 border-b theme-border theme-panel flex flex-col sm:flex-row justify-between items-start gap-4 transition-all duration-300">
             <div class="max-w-3xl flex-1 pr-0 sm:pr-6">
@@ -1170,19 +1134,20 @@
             </div>
           </div>
           
-          <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div class="flex-1 overflow-y-auto p-4 sm:p-6 relative z-0">
             ${updatesHtml}
           </div>
 
-          <!-- Post Update Box with WYSIWYG Editor -->
-          <div class="p-4 sm:p-6 border-t theme-border theme-panel shrink-0">
+          <!-- Post Update Box with WYSIWYG Editor (BUTTON AT TOP) -->
+          <div class="p-4 sm:p-5 border-t theme-border theme-panel shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
             <div class="flex items-center justify-between mb-2">
-               <span class="text-[10px] theme-text-muted italic">Format text, paste images (Ctrl+V) or click the image icon to upload!</span>
+               <span class="text-[11px] theme-text-muted italic hidden sm:block">Add a comment... (Ctrl+V to paste images directly)</span>
+               <button onclick="addUpdate('${id}')" id="postBtn" class="accent-bg px-6 py-1.5 rounded text-sm font-bold shadow-lg hover:opacity-90 transition-opacity flex items-center gap-2">
+                 <span>Post Update</span>
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+               </button>
             </div>
-            <div id="postUpdateEditor" class="mb-3"></div>
-            <div class="flex justify-end pt-2">
-              <button onclick="addUpdate('${id}')" id="postBtn" class="accent-bg px-8 py-2.5 rounded-lg text-sm font-bold shadow-lg w-full sm:w-auto hover:opacity-90 transition-opacity">Post Update</button>
-            </div>
+            <div id="postUpdateEditor" class="bg-black/10"></div>
           </div>
         </div>
       `;
@@ -1210,7 +1175,7 @@
       initTheme();
       initEmailJS();
       
-      // Initialize persistent modal editors ONCE to completely avoid duplication/crashing bugs
+      // Initialize persistent modal editors ONCE to avoid duplicate toolbar crashing issues
       quillInstances['newSummary'] = createQuillEditor('#newSummaryEditor', 'Overall summary or ticket details...');
       quillInstances['editSummary'] = createQuillEditor('#editSummaryEditor', 'Summary details...');
       quillInstances['editNote'] = createQuillEditor('#editNoteEditor', 'Edit note content...');
