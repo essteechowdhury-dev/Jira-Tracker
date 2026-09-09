@@ -92,7 +92,7 @@
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
     .no-scrollbar::-webkit-scrollbar { display: none; }
 
-    /* Quill Editor Theme Overrides */
+    /* Quill Editor Theme Overrides & Safety Limits */
     .ql-toolbar.ql-snow {
       background-color: var(--bg-card) !important;
       border-color: var(--border-color) !important;
@@ -107,6 +107,11 @@
       border-bottom-right-radius: 0.5rem;
       font-family: inherit;
       font-size: 0.875rem;
+    }
+    .ql-editor {
+      min-height: 100px;
+      max-height: 35vh; /* Prevents editor from pushing the Post button off-screen */
+      overflow-y: auto;
     }
     .ql-stroke { stroke: var(--text-muted) !important; }
     .ql-fill { fill: var(--text-muted) !important; }
@@ -154,7 +159,7 @@
 
   <!-- 🚀 MAIN APP WORKSPACE -->
   <div id="appWorkspace" class="hidden h-full flex flex-col">
-    <header id="appHeader" class="border-b theme-border theme-panel px-6 py-4 flex items-center justify-between z-10 shadow-sm transition-all duration-300">
+    <header id="appHeader" class="shrink-0 border-b theme-border theme-panel px-6 py-4 flex items-center justify-between z-10 shadow-sm transition-all duration-300">
       <div class="flex items-center space-x-3">
         <button onclick="toggleFocusView()" class="theme-card border theme-border p-2 rounded-lg theme-text-muted hover:theme-text-main accent-border transition-colors" title="Toggle Full Focus View">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -259,7 +264,7 @@
       <div id="templatesContainer" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
         <!-- Rendered dynamically -->
       </div>
-      <div class="p-6 border-t theme-border flex justify-between items-center theme-panel">
+      <div class="p-6 border-t theme-border flex justify-between items-center theme-panel shrink-0">
         <button onclick="addNewTemplateSpace()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition">+ Add Template Space</button>
         <button onclick="closeTemplatesModal()" class="theme-card border theme-border theme-text-main px-6 py-2 rounded-lg text-sm font-bold transition">Close</button>
       </div>
@@ -300,7 +305,8 @@
 
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Overall Summary / Details</label>
-          <div id="newSummaryEditor" class="min-h-[100px]"></div>
+          <!-- FIXED QUILL CONTAINER -->
+          <div id="newSummaryEditor"></div>
         </div>
         
         <div class="theme-card p-4 rounded border theme-border">
@@ -360,7 +366,8 @@
 
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Overall Summary / Details</label>
-          <div id="editSummaryEditor" class="min-h-[100px]"></div>
+          <!-- FIXED QUILL CONTAINER -->
+          <div id="editSummaryEditor"></div>
         </div>
         
         <div class="theme-card p-4 rounded border theme-border">
@@ -387,7 +394,8 @@
   <div id="editNoteModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="theme-panel border theme-border rounded-xl max-w-2xl w-full p-6 shadow-2xl">
       <h3 class="text-lg font-medium theme-text-main mb-4">Edit Note</h3>
-      <div id="editNoteEditor" class="min-h-[150px]"></div>
+      <!-- FIXED QUILL CONTAINER -->
+      <div id="editNoteEditor"></div>
       <div class="flex justify-end space-x-3 mt-4">
         <button onclick="closeEditNoteModal()" class="px-4 py-2 text-sm font-medium theme-text-muted hover:theme-text-main">Cancel</button>
         <button onclick="saveEditedNote()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Update Note</button>
@@ -410,7 +418,7 @@
     let currentSort = 'last_updated';
     let isFocusMode = false;
 
-    // Quill Instances Map
+    // --- GLOBALLY CACHED QUILL INSTANCES ---
     let quillInstances = {};
 
     const ALL_STATUS_OPTIONS = [
@@ -609,6 +617,42 @@
     function showApp() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appWorkspace').classList.remove('hidden'); fetchTickets(); }
     function showLogin() { document.getElementById('appWorkspace').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
 
+    // --- UI HELPERS ---
+    function addDynamicRow(containerId, type, data = {}) {
+        const container = document.getElementById(containerId);
+        const row = document.createElement('div');
+        row.className = "flex gap-2 items-center theme-panel p-2 rounded border theme-border";
+        if(type === 'jira') {
+            row.innerHTML = `
+                <input type="text" placeholder="ID (e.g. OPPR-123)" value="${data.id || ''}" class="dyn-id w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="text" placeholder="Subject" value="${data.subj || ''}" class="dyn-subj w-2/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
+            `;
+        } else {
+            row.innerHTML = `
+                <input type="text" placeholder="Title" value="${data.title || ''}" class="dyn-title w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
+            `;
+        }
+        container.appendChild(row);
+    }
+
+    function extractDynamicData(containerId, type) {
+        const container = document.getElementById(containerId);
+        const rows = container.children;
+        const results = [];
+        for(let i=0; i<rows.length; i++) {
+            if(type === 'jira') {
+                results.push({ id: rows[i].querySelector('.dyn-id').value, subj: rows[i].querySelector('.dyn-subj').value, link: rows[i].querySelector('.dyn-link').value });
+            } else {
+                results.push({ title: rows[i].querySelector('.dyn-title').value, link: rows[i].querySelector('.dyn-link').value });
+            }
+        }
+        return JSON.stringify(results);
+    }
+
     // --- TEMPLATES LOGIC ---
     function getTemplates() {
       const stored = localStorage.getItem('saved_templates');
@@ -626,7 +670,6 @@
     function renderTemplatesModal() {
       const container = document.getElementById('templatesContainer');
       const tpls = getTemplates();
-      quillInstances['templates'] = {};
       
       container.innerHTML = tpls.map((t) => `
         <div class="theme-panel border theme-border rounded-lg p-4 relative group">
@@ -637,14 +680,14 @@
               <button onclick="deleteTemplateSpace('${t.id}')" class="text-red-500 hover:text-red-400 font-bold px-2 py-1 text-sm" title="Delete Space">✕</button>
             </div>
           </div>
-          <div id="editor-tpl-${t.id}" class="min-h-[160px]"></div>
+          <div id="editor-tpl-${t.id}"></div>
         </div>
       `).join('');
 
       tpls.forEach(t => {
         const q = createQuillEditor('#editor-tpl-' + t.id, 'Type template content...', t.content);
-        if (q) {
-          quillInstances['templates'][t.id] = q;
+        if(q) {
+          quillInstances[`tpl-${t.id}`] = q;
           q.on('text-change', () => {
             updateTemplateContent(t.id, q.root.innerHTML);
           });
@@ -780,9 +823,9 @@
         addDynamicRow('newShelfContainer', 'shelf'); 
         
         document.getElementById('newTicketModal').classList.remove('hidden'); 
-        const editorContainer = document.getElementById('newSummaryEditor');
-        editorContainer.innerHTML = '';
-        quillInstances['newSummary'] = createQuillEditor('#newSummaryEditor', 'Overall summary or ticket details...');
+        if (quillInstances['newSummary']) {
+          quillInstances['newSummary'].root.innerHTML = '';
+        }
     }
     function closeNewTicketModal() { document.getElementById('newTicketModal').classList.add('hidden'); }
     
@@ -810,9 +853,9 @@
       document.getElementById('editRemark').value = t.remark || '';
 
       document.getElementById('editTicketModal').classList.remove('hidden');
-      const editorContainer = document.getElementById('editSummaryEditor');
-      editorContainer.innerHTML = '';
-      quillInstances['editSummary'] = createQuillEditor('#editSummaryEditor', 'Summary details...', t.summary || '');
+      if (quillInstances['editSummary']) {
+        quillInstances['editSummary'].root.innerHTML = t.summary || '';
+      }
     }
     function closeEditTicketModal() { document.getElementById('editTicketModal').classList.add('hidden'); }
     
@@ -820,9 +863,9 @@
       currentEditNoteId = noteId; 
       const htmlText = decodeURIComponent(encodedText);
       document.getElementById('editNoteModal').classList.remove('hidden'); 
-      const editorContainer = document.getElementById('editNoteEditor');
-      editorContainer.innerHTML = '';
-      quillInstances['editNote'] = createQuillEditor('#editNoteEditor', 'Edit note content...', htmlText);
+      if (quillInstances['editNote']) {
+        quillInstances['editNote'].root.innerHTML = htmlText;
+      }
     }
     function closeEditNoteModal() { document.getElementById('editNoteModal').classList.add('hidden'); }
 
@@ -1098,9 +1141,9 @@
       ` : '';
 
       workspace.innerHTML = `
-        <div class="flex flex-col h-full w-full">
+        <div class="flex flex-col h-full w-full overflow-hidden">
           <!-- Ticket Details Meta Banner -->
-          <div id="ticketMetaHeader" class="${isFocusMode ? 'hidden' : ''} p-6 border-b theme-border theme-panel flex flex-col sm:flex-row justify-between items-start gap-4 transition-all duration-300">
+          <div id="ticketMetaHeader" class="${isFocusMode ? 'hidden' : ''} shrink-0 p-6 border-b theme-border theme-panel flex flex-col sm:flex-row justify-between items-start gap-4 transition-all duration-300">
             <div class="max-w-3xl flex-1 pr-0 sm:pr-6">
               <div class="flex gap-2 mb-3">
                 <span class="px-2 py-0.5 rounded text-xs font-bold border ${ticket.priority === 'High' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (ticket.priority === 'Low' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20')}">${ticket.priority || 'Medium'} Prio</span>
@@ -1132,13 +1175,13 @@
           </div>
 
           <!-- Post Update Box with WYSIWYG Editor -->
-          <div class="p-4 sm:p-6 border-t theme-border theme-panel">
+          <div class="p-4 sm:p-6 border-t theme-border theme-panel shrink-0">
             <div class="flex items-center justify-between mb-2">
                <span class="text-[10px] theme-text-muted italic">Format text, paste images (Ctrl+V) or click the image icon to upload!</span>
             </div>
-            <div id="postUpdateEditor" class="min-h-[120px] mb-3"></div>
-            <div class="flex justify-end">
-              <button onclick="addUpdate('${id}')" id="postBtn" class="accent-bg px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg w-full sm:w-auto">Post Update</button>
+            <div id="postUpdateEditor" class="mb-3"></div>
+            <div class="flex justify-end pt-2">
+              <button onclick="addUpdate('${id}')" id="postBtn" class="accent-bg px-8 py-2.5 rounded-lg text-sm font-bold shadow-lg w-full sm:w-auto hover:opacity-90 transition-opacity">Post Update</button>
             </div>
           </div>
         </div>
@@ -1166,6 +1209,12 @@
     window.onload = () => {
       initTheme();
       initEmailJS();
+      
+      // Initialize persistent modal editors ONCE to completely avoid duplication/crashing bugs
+      quillInstances['newSummary'] = createQuillEditor('#newSummaryEditor', 'Overall summary or ticket details...');
+      quillInstances['editSummary'] = createQuillEditor('#editSummaryEditor', 'Summary details...');
+      quillInstances['editNote'] = createQuillEditor('#editNoteEditor', 'Edit note content...');
+
       if(SUPABASE_ANON_KEY) {
         dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         dbClient.auth.onAuthStateChange((event, session) => { if (event === 'SIGNED_IN') showApp(); if (event === 'SIGNED_OUT') showLogin(); });
