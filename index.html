@@ -11,6 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <!-- DOMPurify for XSS Protection -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
   <style>
     /* COMPLETE THEME COLOR PALETTES */
@@ -110,7 +112,7 @@
     }
     .ql-editor {
       min-height: 100px;
-      max-height: 35vh;
+      max-height: 35vh; 
       overflow-y: auto;
     }
     .ql-stroke { stroke: var(--text-muted) !important; }
@@ -451,7 +453,7 @@
         modules: { toolbar: QUILL_TOOLBAR_OPTIONS }
       });
       if (initialHTML) {
-        q.root.innerHTML = initialHTML;
+        q.root.innerHTML = DOMPurify.sanitize(initialHTML);
       }
       return q;
     }
@@ -617,15 +619,15 @@
         row.className = "flex gap-2 items-center theme-panel p-2 rounded border theme-border";
         if(type === 'jira') {
             row.innerHTML = `
-                <input type="text" placeholder="ID (e.g. OPPR-123)" value="${data.id || ''}" class="dyn-id w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <input type="text" placeholder="Subject" value="${data.subj || ''}" class="dyn-subj w-2/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="text" placeholder="ID (e.g. OPPR-123)" value="${DOMPurify.sanitize(data.id || '')}" class="dyn-id w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="text" placeholder="Subject" value="${DOMPurify.sanitize(data.subj || '')}" class="dyn-subj w-2/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="url" placeholder="Link (https://)" value="${DOMPurify.sanitize(data.link || '')}" class="dyn-link w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
                 <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
             `;
         } else {
             row.innerHTML = `
-                <input type="text" placeholder="Title" value="${data.title || ''}" class="dyn-title w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="text" placeholder="Title" value="${DOMPurify.sanitize(data.title || '')}" class="dyn-title w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="url" placeholder="Link (https://)" value="${DOMPurify.sanitize(data.link || '')}" class="dyn-link w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
                 <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
             `;
         }
@@ -638,9 +640,9 @@
         const results = [];
         for(let i=0; i<rows.length; i++) {
             if(type === 'jira') {
-                results.push({ id: rows[i].querySelector('.dyn-id').value, subj: rows[i].querySelector('.dyn-subj').value, link: rows[i].querySelector('.dyn-link').value });
+                results.push({ id: DOMPurify.sanitize(rows[i].querySelector('.dyn-id').value), subj: DOMPurify.sanitize(rows[i].querySelector('.dyn-subj').value), link: DOMPurify.sanitize(rows[i].querySelector('.dyn-link').value) });
             } else {
-                results.push({ title: rows[i].querySelector('.dyn-title').value, link: rows[i].querySelector('.dyn-link').value });
+                results.push({ title: DOMPurify.sanitize(rows[i].querySelector('.dyn-title').value), link: DOMPurify.sanitize(rows[i].querySelector('.dyn-link').value) });
             }
         }
         return JSON.stringify(results);
@@ -667,13 +669,13 @@
       container.innerHTML = tpls.map((t) => `
         <div class="theme-panel border theme-border rounded-lg p-4 relative group">
           <div class="flex justify-between items-center mb-3 border-b theme-border pb-3 gap-2">
-            <input type="text" value="${t.title}" onchange="updateTemplateTitle('${t.id}', this.value)" class="bg-transparent font-bold accent-text text-base focus:outline-none focus:border-b accent-border w-full">
+            <input type="text" value="${DOMPurify.sanitize(t.title)}" onchange="updateTemplateTitle('${t.id}', this.value)" class="bg-transparent font-bold accent-text text-base focus:outline-none focus:border-b accent-border w-full">
             <div class="flex items-center gap-2 shrink-0">
               <button onclick="copyTemplateText('${t.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded transition">Copy Text</button>
               <button onclick="deleteTemplateSpace('${t.id}')" class="text-red-500 hover:text-red-400 font-bold px-2 py-1 text-sm" title="Delete Space">✕</button>
             </div>
           </div>
-          <div id="editor-tpl-${t.id}" class="min-h-[160px]"></div>
+          <div id="editor-tpl-${t.id}"></div>
         </div>
       `).join('');
 
@@ -697,13 +699,13 @@
     function updateTemplateTitle(id, value) {
       const tpls = getTemplates();
       const item = tpls.find(x => x.id === id);
-      if(item) { item.title = value; saveTemplates(tpls); }
+      if(item) { item.title = DOMPurify.sanitize(value); saveTemplates(tpls); }
     }
 
     function updateTemplateContent(id, htmlValue) {
       const tpls = getTemplates();
       const item = tpls.find(x => x.id === id);
-      if(item) { item.content = htmlValue; saveTemplates(tpls); }
+      if(item) { item.content = DOMPurify.sanitize(htmlValue); saveTemplates(tpls); }
     }
 
     function addNewTemplateSpace() {
@@ -730,8 +732,8 @@
       const item = tpls.find(x => x.id === id);
       if(!item) return;
 
-      const html = item.content;
-      const plainText = item.content.replace(/<[^>]*>/g, '');
+      const html = DOMPurify.sanitize(item.content);
+      const plainText = html.replace(/<[^>]*>/g, '');
 
       try {
         const blobHtml = new Blob([html], { type: 'text/html' });
@@ -795,7 +797,7 @@
 
         const aiSummary = result?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (aiSummary) {
-          await dbClient.from('tickets').update({ summary: aiSummary.trim() }).eq('id', ticketId);
+          await dbClient.from('tickets').update({ summary: DOMPurify.sanitize(aiSummary.trim()) }).eq('id', ticketId);
           fetchTickets();
           openTicket(ticketId);
         } else {
@@ -817,7 +819,6 @@
         
         document.getElementById('newTicketModal').classList.remove('hidden'); 
         
-        // SAFELY INITIALIZE QUILL AFTER MODAL IS VISIBLE
         if (!quillInstances['newSummary']) {
           quillInstances['newSummary'] = createQuillEditor('#newSummaryEditor', 'Overall summary or ticket details...');
         } else {
@@ -848,25 +849,23 @@
       document.getElementById('editPriority').value = t.priority || 'Medium';
       document.getElementById('editFreq').value = t.update_frequency_days || 7;
       document.getElementById('editDueDate').value = t.due_date || '';
-      document.getElementById('editRemark').value = t.remark || '';
+      document.getElementById('editRemark').value = DOMPurify.sanitize(t.remark || '');
 
       document.getElementById('editTicketModal').classList.remove('hidden');
       
-      // SAFELY INITIALIZE QUILL AFTER MODAL IS VISIBLE
       if (!quillInstances['editSummary']) {
         quillInstances['editSummary'] = createQuillEditor('#editSummaryEditor', 'Summary details...', t.summary || '');
       } else {
-        quillInstances['editSummary'].root.innerHTML = t.summary || '';
+        quillInstances['editSummary'].root.innerHTML = DOMPurify.sanitize(t.summary || '');
       }
     }
     function closeEditTicketModal() { document.getElementById('editTicketModal').classList.add('hidden'); }
     
     function openEditNoteModal(noteId, encodedText) { 
       currentEditNoteId = noteId; 
-      const htmlText = decodeURIComponent(encodedText);
+      const htmlText = DOMPurify.sanitize(decodeURIComponent(encodedText));
       document.getElementById('editNoteModal').classList.remove('hidden'); 
       
-      // SAFELY INITIALIZE QUILL AFTER MODAL IS VISIBLE
       if (!quillInstances['editNote']) {
         quillInstances['editNote'] = createQuillEditor('#editNoteEditor', 'Edit note content...', htmlText);
       } else {
@@ -877,7 +876,7 @@
 
     async function saveEditedNote() {
       if(!currentEditNoteId || !quillInstances['editNote']) return;
-      const htmlVal = quillInstances['editNote'].root.innerHTML;
+      const htmlVal = DOMPurify.sanitize(quillInstances['editNote'].root.innerHTML);
       await dbClient.from('ticket_updates').update({ content: htmlVal }).eq('id', currentEditNoteId);
       closeEditNoteModal();
       openTicket(currentOpenTicketId);
@@ -971,15 +970,15 @@
         try {
           if (typeof rawJira === 'string' && rawJira.startsWith('[')) {
             const parsed = JSON.parse(rawJira);
-            displayTitle = parsed.map(j => j.id).filter(Boolean).join(', ');
-            displaySubject = parsed.map(j => j.subj).filter(Boolean).join(' | ') || t.subject || '';
+            displayTitle = DOMPurify.sanitize(parsed.map(j => j.id).filter(Boolean).join(', '));
+            displaySubject = DOMPurify.sanitize(parsed.map(j => j.subj).filter(Boolean).join(' | ')) || DOMPurify.sanitize(t.subject || '');
           } else {
-            displayTitle = String(rawJira || '');
-            displaySubject = t.subject || '';
+            displayTitle = DOMPurify.sanitize(String(rawJira || ''));
+            displaySubject = DOMPurify.sanitize(t.subject || '');
           }
         } catch(e) {
-          displayTitle = String(rawJira || '');
-          displaySubject = t.subject || '';
+          displayTitle = DOMPurify.sanitize(String(rawJira || ''));
+          displaySubject = DOMPurify.sanitize(t.subject || '');
         }
 
         return `
@@ -1003,13 +1002,13 @@
     async function createNewTicket() {
       const jiraJson = extractDynamicData('newJiraContainer', 'jira');
       const shelfJson = extractDynamicData('newShelfContainer', 'shelf');
-      const summaryHTML = quillInstances['newSummary'] ? quillInstances['newSummary'].root.innerHTML : '';
+      const summaryHTML = quillInstances['newSummary'] ? DOMPurify.sanitize(quillInstances['newSummary'].root.innerHTML) : '';
       
       const insertData = {
         jira_id: jiraJson, 
         shelf_title: shelfJson,
         summary: summaryHTML,
-        remark: document.getElementById('newRemark').value,
+        remark: DOMPurify.sanitize(document.getElementById('newRemark').value),
         priority: document.getElementById('newPriority').value,
         update_frequency_days: parseInt(document.getElementById('newFreq').value) || 7,
         due_date: document.getElementById('newDueDate').value || null,
@@ -1028,13 +1027,13 @@
     async function saveTicketEdits() {
       const jiraJson = extractDynamicData('editJiraContainer', 'jira');
       const shelfJson = extractDynamicData('editShelfContainer', 'shelf');
-      const summaryHTML = quillInstances['editSummary'] ? quillInstances['editSummary'].root.innerHTML : '';
+      const summaryHTML = quillInstances['editSummary'] ? DOMPurify.sanitize(quillInstances['editSummary'].root.innerHTML) : '';
       
       const updateData = {
         jira_id: jiraJson, 
         shelf_title: shelfJson,
         summary: summaryHTML,
-        remark: document.getElementById('editRemark').value,
+        remark: DOMPurify.sanitize(document.getElementById('editRemark').value),
         priority: document.getElementById('editPriority').value,
         update_frequency_days: parseInt(document.getElementById('editFreq').value) || 7,
         due_date: document.getElementById('editDueDate').value || null,
@@ -1067,7 +1066,7 @@
 
     async function submitReply(noteId) {
       if(!quillInstances[`reply-${noteId}`]) return;
-      const replyVal = quillInstances[`reply-${noteId}`].root.innerHTML;
+      const replyVal = DOMPurify.sanitize(quillInstances[`reply-${noteId}`].root.innerHTML);
       if(!replyVal || replyVal === '<p><br></p>') return;
       
       const { data } = await dbClient.from('ticket_updates').select('content').eq('id', noteId).single();
@@ -1097,7 +1096,7 @@
                   <button onclick="deleteNote('${u.id}')" class="text-xs text-red-500 hover:text-red-400">Delete</button>
                 </div>
               </div>
-              <div class="theme-text-main text-sm whitespace-pre-wrap leading-relaxed prose prose-invert max-w-none break-words overflow-hidden">${u.content}</div>
+              <div class="theme-text-main text-sm whitespace-pre-wrap leading-relaxed prose prose-invert max-w-none break-words overflow-hidden">${DOMPurify.sanitize(u.content)}</div>
               
               <div id="replyBox-${u.id}" class="hidden mt-4 pl-4 border-l-2 theme-border space-y-2">
                 <div class="flex items-center justify-between mt-2 mb-1">
@@ -1116,25 +1115,25 @@
       try {
           if (typeof rawJira === 'string' && rawJira.startsWith('[')) {
               const jiras = JSON.parse(rawJira);
-              idsHtml = jiras.map(j => j.link ? `<a href="${j.link}" target="_blank" class="hover:text-blue-400 hover:underline inline-flex items-center gap-1">${j.id} <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : j.id).join('<span class="theme-text-muted mx-2">|</span>');
-              subjectsHtml = jiras.map(j => j.subj).filter(Boolean).join('<span class="theme-text-muted mx-2">|</span>') || ticket.subject || '';
+              idsHtml = jiras.map(j => j.link ? `<a href="${DOMPurify.sanitize(j.link)}" target="_blank" class="hover:text-blue-400 hover:underline inline-flex items-center gap-1">${DOMPurify.sanitize(j.id)} <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : DOMPurify.sanitize(j.id)).join('<span class="theme-text-muted mx-2">|</span>');
+              subjectsHtml = DOMPurify.sanitize(jiras.map(j => j.subj).filter(Boolean).join(' | ') || ticket.subject || '');
           } else {
-              idsHtml = ticket.ticket_link ? `<a href="${ticket.ticket_link}" target="_blank" class="hover:text-blue-400 hover:underline inline-flex items-center gap-1">${ticket.jira_id} <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : ticket.jira_id;
-              subjectsHtml = ticket.subject || '';
+              idsHtml = ticket.ticket_link ? `<a href="${DOMPurify.sanitize(ticket.ticket_link)}" target="_blank" class="hover:text-blue-400 hover:underline inline-flex items-center gap-1">${DOMPurify.sanitize(ticket.jira_id)} <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : DOMPurify.sanitize(ticket.jira_id);
+              subjectsHtml = DOMPurify.sanitize(ticket.subject || '');
           }
       } catch(e) {
-          idsHtml = String(ticket.jira_id || '');
-          subjectsHtml = ticket.subject || '';
+          idsHtml = DOMPurify.sanitize(String(ticket.jira_id || ''));
+          subjectsHtml = DOMPurify.sanitize(ticket.subject || '');
       }
 
       let shelfHtml = '';
       try {
           if(ticket.shelf_title && typeof ticket.shelf_title === 'string' && ticket.shelf_title.startsWith('[')) {
               const shelves = JSON.parse(ticket.shelf_title);
-              shelfHtml = shelves.filter(s => s.title || s.link).map(s => `<a href="${s.link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold block theme-card px-3 py-1.5 rounded border theme-border mb-1 w-fit">${s.title || 'Link'}</a>`).join('');
+              shelfHtml = shelves.filter(s => s.title || s.link).map(s => `<a href="${DOMPurify.sanitize(s.link || '#')}" target="_blank" class="text-blue-400 hover:underline font-semibold block theme-card px-3 py-1.5 rounded border theme-border mb-1 w-fit">${DOMPurify.sanitize(s.title || 'Link')}</a>`).join('');
               if(shelfHtml) shelfHtml = `<div class="mt-4"><span class="theme-text-muted text-xs uppercase font-bold block mb-2">Shelf Pages:</span>${shelfHtml}</div>`;
           } else if (ticket.shelf_title) {
-              shelfHtml = `<div class="mt-4"><span class="theme-text-muted text-xs uppercase font-bold block mb-2">Shelf Pages:</span><a href="${ticket.shelf_link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold theme-card px-3 py-1.5 rounded border theme-border inline-block">${ticket.shelf_title}</a></div>`;
+              shelfHtml = `<div class="mt-4"><span class="theme-text-muted text-xs uppercase font-bold block mb-2">Shelf Pages:</span><a href="${DOMPurify.sanitize(ticket.shelf_link || '#')}" target="_blank" class="text-blue-400 hover:underline font-semibold theme-card px-3 py-1.5 rounded border theme-border inline-block">${DOMPurify.sanitize(ticket.shelf_title)}</a></div>`;
           }
       } catch(e) { }
 
@@ -1143,7 +1142,7 @@
              <div class="flex items-center gap-2 mb-1">
                <span class="text-indigo-400 text-[10px] font-bold uppercase tracking-widest">✨ AI AUTO-SUMMARY</span>
              </div>
-             <div class="theme-text-main text-sm italic leading-relaxed prose prose-invert">${ticket.summary}</div>
+             <div class="theme-text-main text-sm italic leading-relaxed prose prose-invert">${DOMPurify.sanitize(ticket.summary)}</div>
           </div>
       ` : '';
 
@@ -1166,7 +1165,7 @@
 
               ${aiSummaryBlock}
               ${shelfHtml}
-              ${ticket.remark ? `<div class="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-amber-400 text-sm"><span class="font-bold uppercase tracking-wider mr-2 text-xs">Remark:</span>${ticket.remark}</div>` : ''}
+              ${ticket.remark ? `<div class="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-amber-400 text-sm"><span class="font-bold uppercase tracking-wider mr-2 text-xs">Remark:</span>${DOMPurify.sanitize(ticket.remark)}</div>` : ''}
             </div>
             
             <div class="flex flex-row sm:flex-col items-end space-x-3 sm:space-x-0 sm:space-y-3 shrink-0 w-full sm:w-auto">
@@ -1181,7 +1180,7 @@
             ${updatesHtml}
           </div>
 
-          <!-- Post Update Box with WYSIWYG Editor -->
+          <!-- Post Update Box with WYSIWYG Editor (BUTTON AT TOP) -->
           <div class="p-4 sm:p-5 border-t theme-border theme-panel shrink-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
             <div class="flex items-center justify-between mb-2">
                <span class="text-[11px] theme-text-muted italic hidden sm:block">Add a comment... (Ctrl+V to paste images directly)</span>
@@ -1202,7 +1201,7 @@
 
     async function addUpdate(ticketId) {
       if(!quillInstances['postUpdate']) return;
-      const htmlVal = quillInstances['postUpdate'].root.innerHTML;
+      const htmlVal = DOMPurify.sanitize(quillInstances['postUpdate'].root.innerHTML);
       if (!htmlVal || htmlVal === '<p><br></p>') return;
 
       const { error } = await dbClient.from('ticket_updates').insert([{ ticket_id: ticketId, content: htmlVal }]);
@@ -1218,6 +1217,10 @@
       initTheme();
       initEmailJS();
       
+      quillInstances['newSummary'] = createQuillEditor('#newSummaryEditor', 'Overall summary or ticket details...');
+      quillInstances['editSummary'] = createQuillEditor('#editSummaryEditor', 'Summary details...');
+      quillInstances['editNote'] = createQuillEditor('#editNoteEditor', 'Edit note content...');
+
       if(SUPABASE_ANON_KEY) {
         dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         dbClient.auth.onAuthStateChange((event, session) => { if (event === 'SIGNED_IN') showApp(); if (event === 'SIGNED_OUT') showLogin(); });
