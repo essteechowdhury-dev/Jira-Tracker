@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,77 +7,103 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* Dynamic CSS Theme Variables */
-    :root {
+    /* COMPLETE THEME COLOR PALETTES */
+    :root, .theme-obsidian {
+      --bg-main: #020617;
+      --bg-panel: #0f172a;
+      --bg-card: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
       --accent: #f59e0b;
-      --accent-hover: #fbbf24;
-      --accent-text: #f59e0b;
-      --accent-soft: rgba(245, 158, 11, 0.1);
-      --accent-border: rgba(245, 158, 11, 0.25);
+      --accent-hover: #d97706;
+      --accent-text: #020617;
     }
-    .theme-emerald {
+    .theme-navy {
+      --bg-main: #0a1128;
+      --bg-panel: #121e36;
+      --bg-card: #1c2b4a;
+      --border-color: #2a3d5e;
+      --text-main: #f1f5f9;
+      --text-muted: #8da4c4;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --accent-text: #020617;
+    }
+    .theme-forest {
+      --bg-main: #061712;
+      --bg-panel: #0d2820;
+      --bg-card: #14382e;
+      --border-color: #1f5244;
+      --text-main: #ecfdf5;
+      --text-muted: #6ee7b7;
       --accent: #10b981;
-      --accent-hover: #34d399;
-      --accent-text: #34d399;
-      --accent-soft: rgba(16, 185, 129, 0.1);
-      --accent-border: rgba(16, 185, 129, 0.25);
+      --accent-hover: #059669;
+      --accent-text: #020617;
     }
-    .theme-cyan {
-      --accent: #06b6d4;
-      --accent-hover: #22d3ee;
-      --accent-text: #38bdf8;
-      --accent-soft: rgba(6, 182, 212, 0.1);
-      --accent-border: rgba(6, 182, 212, 0.25);
-    }
-    .theme-purple {
-      --accent: #8b5cf6;
-      --accent-hover: #a78bfa;
-      --accent-text: #c084fc;
-      --accent-soft: rgba(139, 92, 246, 0.1);
-      --accent-border: rgba(139, 92, 246, 0.25);
-    }
-    .theme-rose {
+    .theme-cyber {
+      --bg-main: #0d0221;
+      --bg-panel: #190634;
+      --bg-card: #260c4a;
+      --border-color: #3d146e;
+      --text-main: #f5f3ff;
+      --text-muted: #c084fc;
       --accent: #f43f5e;
-      --accent-hover: #fb7185;
-      --accent-text: #fb7185;
-      --accent-soft: rgba(244, 63, 94, 0.1);
-      --accent-border: rgba(244, 63, 94, 0.25);
+      --accent-hover: #e11d48;
+      --accent-text: #ffffff;
+    }
+    .theme-light {
+      --bg-main: #f8fafc;
+      --bg-panel: #ffffff;
+      --bg-card: #f1f5f9;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #4f46e5;
+      --accent-hover: #4338ca;
+      --accent-text: #ffffff;
     }
 
-    /* Dynamic Theme Class Utilities */
-    .accent-bg { background-color: var(--accent) !important; color: #020617 !important; }
-    .accent-bg:hover { background-color: var(--accent-hover) !important; }
-    .accent-text { color: var(--accent-text) !important; }
-    .accent-border { border-color: var(--accent) !important; }
-    .accent-border-soft { border-color: var(--accent-border) !important; }
-    .accent-bg-soft { background-color: var(--accent-soft) !important; }
+    body {
+      background-color: var(--bg-main) !important;
+      color: var(--text-main) !important;
+    }
+    .theme-panel { background-color: var(--bg-panel) !important; }
+    .theme-card { background-color: var(--bg-card) !important; }
+    .theme-border { border-color: var(--border-color) !important; }
+    .theme-text-muted { color: var(--text-muted) !important; }
+    .theme-text-main { color: var(--text-main) !important; }
 
-    /* Custom visible scrollbar */
+    .accent-bg { background-color: var(--accent) !important; color: var(--accent-text) !important; }
+    .accent-bg:hover { background-color: var(--accent-hover) !important; }
+    .accent-text { color: var(--accent) !important; }
+    .accent-border { border-color: var(--accent) !important; }
+
+    /* Custom Scrollbar */
     .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
     .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="h-full font-sans overflow-hidden">
 
   <!-- 🔒 LOGIN SCREEN -->
-  <div id="loginScreen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-[100]">
-    <div class="bg-slate-900 border border-slate-800 p-8 rounded-xl shadow-2xl max-w-sm w-full">
+  <div id="loginScreen" class="fixed inset-0 flex flex-col items-center justify-center z-[100] theme-panel">
+    <div class="theme-card border theme-border p-8 rounded-xl shadow-2xl max-w-sm w-full">
       <div class="text-center mb-6">
         <span class="accent-bg px-3 py-1 rounded-lg font-bold text-sm tracking-wide">Jira Workspace</span>
-        <h2 class="text-2xl font-semibold mt-4 text-slate-100">Welcome Back</h2>
+        <h2 class="text-2xl font-semibold mt-4 theme-text-main">Welcome Back</h2>
       </div>
       <div class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Email</label>
-          <input type="email" id="loginEmail" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-slate-100">
+          <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Email</label>
+          <input type="email" id="loginEmail" class="w-full theme-panel border theme-border rounded-lg px-4 py-2.5 text-sm focus:outline-none accent-border theme-text-main">
         </div>
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Password</label>
-          <input type="password" id="loginPassword" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-slate-100" onkeypress="if(event.key === 'Enter') handleLogin()">
+          <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Password</label>
+          <input type="password" id="loginPassword" class="w-full theme-panel border theme-border rounded-lg px-4 py-2.5 text-sm focus:outline-none accent-border theme-text-main" onkeypress="if(event.key === 'Enter') handleLogin()">
         </div>
         <p id="loginError" class="text-red-500 text-xs hidden text-center font-medium"></p>
         <button onclick="handleLogin()" id="loginBtn" class="w-full accent-bg py-2.5 rounded-lg text-sm font-bold shadow-lg transition-colors mt-2">Sign In</button>
@@ -87,36 +113,36 @@
 
   <!-- 🚀 MAIN APP WORKSPACE -->
   <div id="appWorkspace" class="hidden h-full flex flex-col">
-    <header class="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between z-10 shadow-sm">
+    <header id="appHeader" class="border-b theme-border theme-panel px-6 py-4 flex items-center justify-between z-10 shadow-sm transition-all duration-300">
       <div class="flex items-center space-x-3">
-        <button onclick="toggleSidebar()" class="bg-slate-800 border border-slate-700 p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:border-amber-500 transition-colors" title="Toggle Sidebar View">
+        <button onclick="toggleFocusView()" class="theme-card border theme-border p-2 rounded-lg theme-text-muted hover:theme-text-main accent-border transition-colors" title="Toggle Full Focus View">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
         <div class="accent-bg p-2 rounded-lg font-bold text-sm">Jira</div>
-        <h1 class="text-xl font-semibold tracking-tight text-slate-200 hidden sm:block">Tracker Workspace</h1>
+        <h1 class="text-xl font-semibold tracking-tight theme-text-main hidden sm:block">Tracker Workspace</h1>
       </div>
       <div class="flex items-center space-x-3">
-        <button onclick="openThemeModal()" class="bg-slate-800 border border-slate-700 p-2 rounded-lg text-slate-300 hover:text-white hover:border-amber-500 transition-colors" title="Change Theme">🎨 Theme</button>
+        <button onclick="openThemeModal()" class="theme-card border theme-border p-2 rounded-lg theme-text-main accent-border transition-colors" title="Change Theme Palette">🎨 Theme</button>
         <button onclick="openTemplatesModal()" class="bg-indigo-600 hover:bg-indigo-500 text-slate-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">📝 Templates</button>
         <button onclick="openNewTicketModal()" class="accent-bg px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg">+ New Ticket</button>
-        <button onclick="handleLogout()" class="text-slate-400 hover:text-slate-200 text-sm font-medium transition-colors hidden sm:block">Sign Out</button>
+        <button onclick="handleLogout()" class="theme-text-muted hover:theme-text-main text-sm font-medium transition-colors hidden sm:block">Sign Out</button>
       </div>
     </header>
 
     <div class="flex-1 flex overflow-hidden relative">
       <!-- Left Sidebar Container -->
-      <aside id="sidebar" class="w-full sm:w-[26rem] shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col z-20 h-full transition-all duration-300">
-        <div id="tabsContainer" class="flex overflow-x-auto border-b border-slate-800 bg-slate-900 text-xs custom-scrollbar items-center pb-1">
+      <aside id="sidebar" class="w-full sm:w-[26rem] shrink-0 border-r theme-border theme-panel flex flex-col z-20 h-full transition-all duration-300">
+        <div id="tabsContainer" class="flex overflow-x-auto border-b theme-border theme-panel text-xs custom-scrollbar items-center pb-1">
           <button onclick="setTab('Waiting Reply from Stakeholders', 'tab-waiting-ext')" id="tab-waiting-ext" class="px-4 py-3 font-semibold border-b-2 accent-border accent-text whitespace-nowrap transition-colors shrink-0">Waiting Reply (Stakeholders)</button>
-          <button onclick="setTab('Waiting Reply Internal', 'tab-waiting-int')" id="tab-waiting-int" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Waiting Reply (Internal)</button>
-          <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Parked</button>
-          <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0">Finished</button>
+          <button onclick="setTab('Waiting Reply Internal', 'tab-waiting-int')" id="tab-waiting-int" class="px-4 py-3 font-semibold border-b-2 border-transparent theme-text-muted hover:theme-text-main whitespace-nowrap transition-colors shrink-0">Waiting Reply (Internal)</button>
+          <button onclick="setTab('Parked', 'tab-parked')" id="tab-parked" class="px-4 py-3 font-semibold border-b-2 border-transparent theme-text-muted hover:theme-text-main whitespace-nowrap transition-colors shrink-0">Parked</button>
+          <button onclick="setTab('Finished', 'tab-finished')" id="tab-finished" class="px-4 py-3 font-semibold border-b-2 border-transparent theme-text-muted hover:theme-text-main whitespace-nowrap transition-colors shrink-0">Finished</button>
         </div>
-        <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
-          <input type="text" id="searchBar" placeholder="Search Jiras..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-slate-200 shadow-inner">
+        <div class="p-4 border-b theme-border flex flex-col gap-2">
+          <input type="text" id="searchBar" placeholder="Search Jiras..." class="w-full theme-card border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main shadow-inner">
           <div class="flex items-center gap-2 text-xs">
-            <span class="text-slate-500 font-semibold uppercase tracking-wider">Sort:</span>
-            <select id="sortSelect" onchange="changeSort(this.value)" class="bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-slate-300 focus:outline-none focus:border-amber-500">
+            <span class="theme-text-muted font-semibold uppercase tracking-wider">Sort:</span>
+            <select id="sortSelect" onchange="changeSort(this.value)" class="theme-panel border theme-border rounded-md px-2 py-1 theme-text-main focus:outline-none accent-border">
               <option value="last_updated">Last Updated</option>
               <option value="priority">Priority</option>
               <option value="due_date">Due Date</option>
@@ -124,84 +150,89 @@
             </select>
           </div>
         </div>
-        <div id="ticketList" class="flex-1 overflow-y-auto divide-y divide-slate-800/60 custom-scrollbar pb-20 sm:pb-0 bg-slate-900/50">
-          <p class="text-slate-500 text-sm p-4 text-center">Loading tickets...</p>
+        <div id="ticketList" class="flex-1 overflow-y-auto divide-y theme-border custom-scrollbar pb-20 sm:pb-0">
+          <p class="theme-text-muted text-sm p-4 text-center">Loading tickets...</p>
         </div>
       </aside>
 
       <!-- Main Workspace -->
-      <main id="workspace" class="flex-1 flex flex-col bg-slate-950 h-full overflow-hidden w-full relative">
-        <div class="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center">
-          <svg class="w-16 h-16 mb-4 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+      <main id="workspace" class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
+        <div class="flex-1 flex flex-col items-center justify-center theme-text-muted p-8 text-center">
+          <svg class="w-16 h-16 mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
           <p>Select a Jira ticket from the list to view its timeline.</p>
         </div>
       </main>
+
+      <!-- FLOATING UN-FOCUS BUTTON -->
+      <button id="unfocusBtn" onclick="toggleFocusView()" class="hidden fixed top-4 left-4 z-[90] accent-bg px-4 py-2 rounded-lg text-xs font-bold shadow-2xl flex items-center gap-2">
+        👁️ Exit Focus View
+      </button>
     </div>
   </div>
 
   <!-- MODAL: COLOR THEME SELECTOR -->
-  <div id="themeModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 z-[70]">
-    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-6 shadow-2xl">
-      <div class="flex justify-between items-center mb-6">
-        <h3 class="text-lg font-bold text-slate-100">Select Accent Theme</h3>
-        <button onclick="closeThemeModal()" class="text-slate-400 hover:text-white font-bold">✕</button>
+  <div id="themeModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[70]">
+    <div class="theme-panel border theme-border rounded-xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-6 border-b theme-border pb-3">
+        <h3 class="text-lg font-bold theme-text-main">Select Color Palette Theme</h3>
+        <button onclick="closeThemeModal()" class="theme-text-muted hover:theme-text-main font-bold">✕</button>
       </div>
       <div class="grid grid-cols-1 gap-3 mb-6">
-        <button onclick="applyTheme('')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
-          <span class="text-sm font-semibold text-slate-200">Amber Gold (Default)</span>
-          <span class="w-5 h-5 rounded-full bg-amber-500 inline-block"></span>
+        <button onclick="applyTheme('theme-obsidian')" class="flex items-center justify-between p-3 rounded-lg border theme-border theme-card hover:opacity-90 transition">
+          <span class="text-sm font-semibold theme-text-main">Obsidian Amber (Default)</span>
+          <span class="w-5 h-5 rounded-full bg-amber-500 inline-block border border-black/50"></span>
         </button>
-        <button onclick="applyTheme('theme-emerald')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
-          <span class="text-sm font-semibold text-slate-200">Emerald Mint</span>
-          <span class="w-5 h-5 rounded-full bg-emerald-500 inline-block"></span>
+        <button onclick="applyTheme('theme-navy')" class="flex items-center justify-between p-3 rounded-lg border theme-border theme-card hover:opacity-90 transition">
+          <span class="text-sm font-semibold theme-text-main">Midnight Navy</span>
+          <span class="w-5 h-5 rounded-full bg-sky-400 inline-block border border-black/50"></span>
         </button>
-        <button onclick="applyTheme('theme-cyan')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
-          <span class="text-sm font-semibold text-slate-200">Cyber Cyan</span>
-          <span class="w-5 h-5 rounded-full bg-cyan-500 inline-block"></span>
+        <button onclick="applyTheme('theme-forest')" class="flex items-center justify-between p-3 rounded-lg border theme-border theme-card hover:opacity-90 transition">
+          <span class="text-sm font-semibold theme-text-main">Forest Mint</span>
+          <span class="w-5 h-5 rounded-full bg-emerald-500 inline-block border border-black/50"></span>
         </button>
-        <button onclick="applyTheme('theme-purple')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
-          <span class="text-sm font-semibold text-slate-200">Purple Neon</span>
-          <span class="w-5 h-5 rounded-full bg-violet-500 inline-block"></span>
+        <button onclick="applyTheme('theme-cyber')" class="flex items-center justify-between p-3 rounded-lg border theme-border theme-card hover:opacity-90 transition">
+          <span class="text-sm font-semibold theme-text-main">Cyber Violet</span>
+          <span class="w-5 h-5 rounded-full bg-rose-500 inline-block border border-black/50"></span>
         </button>
-        <button onclick="applyTheme('theme-rose')" class="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-950 hover:bg-slate-800/80 transition">
-          <span class="text-sm font-semibold text-slate-200">Rose Pink</span>
-          <span class="w-5 h-5 rounded-full bg-rose-500 inline-block"></span>
+        <button onclick="applyTheme('theme-light')" class="flex items-center justify-between p-3 rounded-lg border theme-border theme-card hover:opacity-90 transition">
+          <span class="text-sm font-semibold theme-text-main">Clean Light Mode</span>
+          <span class="w-5 h-5 rounded-full bg-indigo-600 inline-block border border-black/50"></span>
         </button>
       </div>
       <div class="flex justify-end">
-        <button onclick="closeThemeModal()" class="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-lg text-sm font-bold">Done</button>
+        <button onclick="closeThemeModal()" class="theme-card border theme-border theme-text-main px-5 py-2 rounded-lg text-sm font-bold">Done</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: TEMPLATES WITH EDIT & ADD SUPPORT -->
-  <div id="templatesModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
-    <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl">
-      <div class="flex justify-between items-center p-6 border-b border-slate-800">
+  <!-- MODAL: TEMPLATES WITH EDIT, ADD & IMAGE PASTE SUPPORT -->
+  <div id="templatesModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+    <div class="theme-panel border theme-border rounded-xl max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl">
+      <div class="flex justify-between items-center p-6 border-b theme-border">
         <div>
-          <h3 class="text-xl font-bold text-slate-100">Saved Template Spaces</h3>
-          <p class="text-xs text-slate-400 mt-1">Edit, create new template spaces, or copy content instantly.</p>
+          <h3 class="text-xl font-bold theme-text-main">Saved Template Spaces</h3>
+          <p class="text-xs theme-text-muted mt-1">Paste images (Ctrl+V) directly into text areas & copy content instantly.</p>
         </div>
-        <button onclick="closeTemplatesModal()" class="text-slate-400 hover:text-white p-2 text-lg font-bold">✕</button>
+        <button onclick="closeTemplatesModal()" class="theme-text-muted hover:theme-text-main p-2 text-lg font-bold">✕</button>
       </div>
       <div id="templatesContainer" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
         <!-- Rendered dynamically -->
       </div>
-      <div class="p-6 border-t border-slate-800 flex justify-between items-center bg-slate-900/80">
+      <div class="p-6 border-t theme-border flex justify-between items-center theme-panel">
         <button onclick="addNewTemplateSpace()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition">+ Add Template Space</button>
-        <button onclick="closeTemplatesModal()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-lg text-sm font-bold transition">Close</button>
+        <button onclick="closeTemplatesModal()" class="theme-card border theme-border theme-text-main px-6 py-2 rounded-lg text-sm font-bold transition">Close</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: Add Ticket -->
-  <div id="newTicketModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-      <h3 class="text-lg font-medium text-slate-200 mb-4">Add New Ticket</h3>
+  <div id="newTicketModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="theme-panel border theme-border rounded-xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <h3 class="text-lg font-medium theme-text-main mb-4">Add New Ticket</h3>
       <div class="space-y-4">
-        <div class="bg-slate-950 p-4 rounded border border-slate-800">
+        <div class="theme-card p-4 rounded border theme-border">
            <div class="flex justify-between items-center mb-2">
-             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Jira Links</label>
+             <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted">Jira Links</label>
              <button onclick="addDynamicRow('newJiraContainer', 'jira')" class="text-xs accent-text hover:underline">+ Add Jira</button>
            </div>
            <div id="newJiraContainer" class="space-y-2"></div>
@@ -209,59 +240,59 @@
 
         <div class="grid grid-cols-3 gap-4">
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Priority</label>
-            <select id="newPriority" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
+            <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Priority</label>
+            <select id="newPriority" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
               <option value="High">High</option>
               <option value="Medium" selected>Medium</option>
               <option value="Low">Low</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Alert Days</label>
-            <input type="number" id="newFreq" value="7" min="1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
+            <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Alert Days</label>
+            <input type="number" id="newFreq" value="7" min="1" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Due Date</label>
-            <input type="date" id="newDueDate" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100" style="color-scheme: dark;">
+            <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Due Date</label>
+            <input type="date" id="newDueDate" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Overall Summary / Details</label>
-          <textarea id="newSummary" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100 resize-none"></textarea>
+          <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Overall Summary / Details</label>
+          <textarea id="newSummary" rows="2" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main resize-none"></textarea>
         </div>
         
-        <div class="bg-slate-950 p-4 rounded border border-slate-800">
+        <div class="theme-card p-4 rounded border theme-border">
            <div class="flex justify-between items-center mb-2">
-             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Shelf Pages</label>
+             <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted">Shelf Pages</label>
              <button onclick="addDynamicRow('newShelfContainer', 'shelf')" class="text-xs accent-text hover:underline">+ Add Shelf</button>
            </div>
            <div id="newShelfContainer" class="space-y-2"></div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Remarks</label>
-          <input type="text" id="newRemark" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
+          <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Remarks</label>
+          <input type="text" id="newRemark" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
         </div>
       </div>
       <div class="flex justify-end space-x-3 mt-6">
-        <button onclick="closeNewTicketModal()" class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200">Cancel</button>
+        <button onclick="closeNewTicketModal()" class="px-4 py-2 text-sm font-medium theme-text-muted hover:theme-text-main">Cancel</button>
         <button onclick="createNewTicket()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Save Ticket</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: EDIT TICKET -->
-  <div id="editTicketModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+  <div id="editTicketModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="theme-panel border theme-border rounded-xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium text-slate-200">Edit Ticket Details</h3>
+        <h3 class="text-lg font-medium theme-text-main">Edit Ticket Details</h3>
         <button onclick="deleteTicket()" class="bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 px-3 py-1.5 rounded text-xs font-bold transition-colors">🗑️ Delete Ticket</button>
       </div>
       <div class="space-y-4">
-        <div class="bg-slate-950 p-4 rounded border border-slate-800">
+        <div class="theme-card p-4 rounded border theme-border">
            <div class="flex justify-between items-center mb-2">
-             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Jira Links</label>
+             <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted">Jira Links</label>
              <button onclick="addDynamicRow('editJiraContainer', 'jira')" class="text-xs accent-text hover:underline">+ Add Jira</button>
            </div>
            <div id="editJiraContainer" class="space-y-2"></div>
@@ -269,55 +300,55 @@
         
         <div class="grid grid-cols-3 gap-4">
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Priority</label>
-            <select id="editPriority" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
+            <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Priority</label>
+            <select id="editPriority" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
               <option value="High">High</option>
               <option value="Medium">Medium</option>
               <option value="Low">Low</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Alert Days</label>
-            <input type="number" id="editFreq" min="1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
+            <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Alert Days</label>
+            <input type="number" id="editFreq" min="1" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Due Date</label>
-            <input type="date" id="editDueDate" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100" style="color-scheme: dark;">
+            <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Due Date</label>
+            <input type="date" id="editDueDate" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Overall Summary / Details</label>
-          <textarea id="editSummary" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100 resize-none"></textarea>
+          <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Overall Summary / Details</label>
+          <textarea id="editSummary" rows="2" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main resize-none"></textarea>
         </div>
         
-        <div class="bg-slate-950 p-4 rounded border border-slate-800">
+        <div class="theme-card p-4 rounded border theme-border">
            <div class="flex justify-between items-center mb-2">
-             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Shelf Pages</label>
+             <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted">Shelf Pages</label>
              <button onclick="addDynamicRow('editShelfContainer', 'shelf')" class="text-xs accent-text hover:underline">+ Add Shelf</button>
            </div>
            <div id="editShelfContainer" class="space-y-2"></div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Remarks</label>
-          <input type="text" id="editRemark" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-amber-500 text-slate-100">
+          <label class="block text-xs font-semibold uppercase tracking-wider theme-text-muted mb-1">Remarks</label>
+          <input type="text" id="editRemark" class="w-full theme-panel border theme-border rounded-lg px-3 py-2 text-sm focus:outline-none accent-border theme-text-main">
         </div>
       </div>
       <div class="flex justify-end space-x-3 mt-6">
-        <button onclick="closeEditTicketModal()" class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200">Cancel</button>
+        <button onclick="closeEditTicketModal()" class="px-4 py-2 text-sm font-medium theme-text-muted hover:theme-text-main">Cancel</button>
         <button onclick="saveTicketEdits()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Save Changes</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: Edit Note -->
-  <div id="editNoteModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
-      <h3 class="text-lg font-medium text-slate-200 mb-4">Edit Note</h3>
-      <textarea id="editNoteText" rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 shadow-inner resize-none custom-scrollbar"></textarea>
+  <div id="editNoteModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="theme-panel border theme-border rounded-xl max-w-2xl w-full p-6 shadow-2xl">
+      <h3 class="text-lg font-medium theme-text-main mb-4">Edit Note</h3>
+      <textarea id="editNoteText" rows="5" class="w-full theme-card border theme-border rounded-xl px-4 py-3 text-sm focus:outline-none accent-border theme-text-main shadow-inner resize-none custom-scrollbar"></textarea>
       <div class="flex justify-end space-x-3 mt-4">
-        <button onclick="closeEditNoteModal()" class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200">Cancel</button>
+        <button onclick="closeEditNoteModal()" class="px-4 py-2 text-sm font-medium theme-text-muted hover:theme-text-main">Cancel</button>
         <button onclick="saveEditedNote()" class="accent-bg px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Update Note</button>
       </div>
     </div>
@@ -327,14 +358,15 @@
 
   <script>
     const SUPABASE_URL = "https://jikqrfseacrrekpolbsa.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imppa3FyZnNlYWNycmVrcG9sYnNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTMzMjMsImV4cCI6MjA5NTYyOTMyM30.Ca-4IFwgmQG2ePn0Sg6hb2txskW7qtAqRWSoPz99vXc"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3OiOiJzdXBhYmFzZSIsInJlZiI6Imppa3FyZnNlYWNycmVrcG9sYnNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTMzMjMsImV4cCI6MjA5NTYyOTMyM30.Ca-4IFwgmQG2ePn0Sg6hb2txskW7qtAqRWSoPz99vXc"; 
     
     let dbClient = null;
     let allTickets = [];
     let currentTab = 'Waiting Reply from Stakeholders';
     let currentSort = 'last_updated';
+    let isFocusMode = false;
     
-    // Status Mapping
+    // Comprehensive Status Mapping
     const STATUS_MAP = {
       'Waiting Reply from Stakeholders': [
         'Waiting Reply from Stakeholders', 
@@ -361,21 +393,39 @@
 
     let currentEditNoteId = null;
     let currentOpenTicketId = null;
-    let sidebarOpen = true;
 
     // --- THEME LOGIC ---
     function initTheme() {
-      const savedTheme = localStorage.getItem('app_theme');
-      if (savedTheme) {
-        document.documentElement.className = 'h-full bg-slate-950 text-slate-100 ' + savedTheme;
-      }
+      const savedTheme = localStorage.getItem('app_theme') || 'theme-obsidian';
+      document.body.className = 'h-full font-sans overflow-hidden ' + savedTheme;
     }
     function openThemeModal() { document.getElementById('themeModal').classList.remove('hidden'); }
     function closeThemeModal() { document.getElementById('themeModal').classList.add('hidden'); }
     function applyTheme(themeClass) {
-      document.documentElement.className = 'h-full bg-slate-950 text-slate-100 ' + themeClass;
+      document.body.className = 'h-full font-sans overflow-hidden ' + themeClass;
       localStorage.setItem('app_theme', themeClass);
       closeThemeModal();
+    }
+
+    // --- FULL FOCUS (ZEN) MODE TOGGLE ---
+    function toggleFocusView() {
+      isFocusMode = !isFocusMode;
+      const sidebar = document.getElementById('sidebar');
+      const header = document.getElementById('appHeader');
+      const ticketMeta = document.getElementById('ticketMetaHeader');
+      const unfocusBtn = document.getElementById('unfocusBtn');
+
+      if (isFocusMode) {
+        if(sidebar) sidebar.classList.add('hidden');
+        if(header) header.classList.add('hidden');
+        if(ticketMeta) ticketMeta.classList.add('hidden');
+        if(unfocusBtn) unfocusBtn.classList.remove('hidden');
+      } else {
+        if(sidebar) sidebar.classList.remove('hidden');
+        if(header) header.classList.remove('hidden');
+        if(ticketMeta) ticketMeta.classList.remove('hidden');
+        if(unfocusBtn) unfocusBtn.classList.add('hidden');
+      }
     }
 
     // --- DEFAULT TEMPLATES DATA ---
@@ -423,27 +473,21 @@
     function showLogin() { document.getElementById('appWorkspace').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
 
     // --- UI HELPERS ---
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebarOpen = !sidebarOpen;
-      sidebar.classList.toggle('hidden', !sidebarOpen);
-    }
-    
     function addDynamicRow(containerId, type, data = {}) {
         const container = document.getElementById(containerId);
         const row = document.createElement('div');
-        row.className = "flex gap-2 items-center bg-slate-900 p-2 rounded border border-slate-700/50";
+        row.className = "flex gap-2 items-center theme-panel p-2 rounded border theme-border";
         if(type === 'jira') {
             row.innerHTML = `
-                <input type="text" placeholder="ID (e.g. OPPR-123)" value="${data.id || ''}" class="dyn-id w-1/4 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
-                <input type="text" placeholder="Subject" value="${data.subj || ''}" class="dyn-subj w-2/4 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
-                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/4 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
+                <input type="text" placeholder="ID (e.g. OPPR-123)" value="${data.id || ''}" class="dyn-id w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="text" placeholder="Subject" value="${data.subj || ''}" class="dyn-subj w-2/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
                 <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
             `;
         } else {
             row.innerHTML = `
-                <input type="text" placeholder="Title" value="${data.title || ''}" class="dyn-title w-1/2 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
-                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/2 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs focus:border-amber-500 text-slate-100">
+                <input type="text" placeholder="Title" value="${data.title || ''}" class="dyn-title w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
+                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
                 <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
             `;
         }
@@ -475,6 +519,7 @@
         }
       }
     }
+
     function handleFileUpload(e) {
       const file = e.target.files[0];
       if(!file) return;
@@ -482,21 +527,23 @@
       readBlobToNote(file, txt);
       e.target.value = ''; 
     }
+
     function readBlobToNote(blob, textElement) {
       const reader = new FileReader();
       reader.onload = function(event) {
         const base64 = event.target.result;
-        textElement.value = textElement.value.substring(0, textElement.selectionStart) + `\n<img src="${base64}" class="max-w-md rounded-lg mt-2 border border-slate-700">\n` + textElement.value.substring(textElement.selectionEnd);
+        textElement.value = textElement.value.substring(0, textElement.selectionStart) + `\n<img src="${base64}" class="max-w-md rounded-lg mt-2 border theme-border">\n` + textElement.value.substring(textElement.selectionEnd);
       };
       reader.readAsDataURL(blob);
     }
+
     function insertMarkdown(type) {
       const textarea = document.getElementById('newUpdateText');
       if (type === 'link') textarea.value += ` [Link Text](https://...)`;
       textarea.focus();
     }
 
-    // --- TEMPLATES LOGIC ---
+    // --- TEMPLATES LOGIC (WITH CLIPBOARD IMAGE PASTE) ---
     function getTemplates() {
       const stored = localStorage.getItem('saved_templates');
       if(!stored) {
@@ -516,17 +563,22 @@
       const tpls = getTemplates();
       
       container.innerHTML = tpls.map((t) => `
-        <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 relative group">
-          <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3 gap-2">
+        <div class="theme-panel border theme-border rounded-lg p-4 relative group">
+          <div class="flex justify-between items-center mb-3 border-b theme-border pb-3 gap-2">
             <input type="text" value="${t.title}" onchange="updateTemplateField('${t.id}', 'title', this.value)" class="bg-transparent font-bold accent-text text-base focus:outline-none focus:border-b accent-border w-full">
             <div class="flex items-center gap-2 shrink-0">
               <button onclick="copyTemplateText('${t.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded transition">Copy Text</button>
               <button onclick="deleteTemplateSpace('${t.id}')" class="text-red-500 hover:text-red-400 font-bold px-2 py-1 text-sm" title="Delete Space">✕</button>
             </div>
           </div>
-          <textarea id="tpl-val-${t.id}" onchange="updateTemplateField('${t.id}', 'content', this.value)" class="w-full h-44 bg-slate-900 border border-slate-800 rounded p-3 text-slate-200 text-sm focus:outline-none focus:border-amber-500 resize-y custom-scrollbar font-mono">${t.content}</textarea>
+          <textarea id="tpl-val-${t.id}" onchange="updateTemplateField('${t.id}', 'content', this.value)" class="tpl-area w-full h-44 theme-card border theme-border rounded p-3 theme-text-main text-sm focus:outline-none accent-border resize-y custom-scrollbar font-mono">${t.content}</textarea>
         </div>
       `).join('');
+
+      // Add Paste Handlers to all template textareas for Image Paste support
+      document.querySelectorAll('.tpl-area').forEach(el => {
+        el.addEventListener('paste', handleImagePaste);
+      });
     }
 
     function openTemplatesModal() {
@@ -567,10 +619,10 @@
       area.select();
       document.execCommand("copy");
       window.getSelection().removeAllRanges();
-      alert("Template copied to clipboard!");
+      alert("Template content copied to clipboard!");
     }
 
-    // --- GEMINI AI AUTO-SUMMARIZATION ---
+    // --- GEMINI 3.6 FLASH AI SUMMARIZATION ---
     async function generateAISummary(ticketId) {
       let apiKey = localStorage.getItem('gemini_api_key');
       
@@ -591,24 +643,14 @@
         const notesText = (updates || []).map(u => u.content.replace(/<img[^>]*>/g, '')).join("\n\n");
         const promptText = `Summarize these Jira timeline notes into 1 or 2 concise, clear executive sentences:\n\n${notesText || ticket.subject || 'No notes available.'}`;
 
-        // Uses active Gemini model endpoints
-        let response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        // Connects to Gemini 3.6 Flash
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
         });
 
-        let result = await response.json();
-
-        // Fallback endpoint if 2.5-flash returns deprecation/404
-        if(result.error && result.error.code === 404) {
-           response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
-          });
-          result = await response.json();
-        }
+        const result = await response.json();
 
         if (result.error) {
           alert(`Google API Error (${result.error.code}): ${result.error.message}`);
@@ -680,7 +722,7 @@
         if(id === tabId) { 
           el.className = "px-4 py-3 font-semibold border-b-2 accent-border accent-text whitespace-nowrap transition-colors shrink-0";
         } else { 
-          el.className = "px-4 py-3 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition-colors shrink-0";
+          el.className = "px-4 py-3 font-semibold border-b-2 border-transparent theme-text-muted hover:theme-text-main whitespace-nowrap transition-colors shrink-0";
         }
       });
       renderTickets();
@@ -718,15 +760,15 @@
         return 0;
       });
 
-      if (filtered.length === 0) { list.innerHTML = `<p class="text-slate-500 text-sm p-4 text-center">No tickets found.</p>`; return; }
+      if (filtered.length === 0) { list.innerHTML = `<p class="theme-text-muted text-sm p-4 text-center">No tickets found.</p>`; return; }
       const now = new Date(); 
 
       list.innerHTML = filtered.map(t => {
-        let badgeColor = "bg-slate-800 text-slate-400 border-slate-700";
-        if(t.status.includes('Waiting')) badgeColor = "accent-bg-soft accent-text accent-border-soft";
-        if(t.status === 'Done' || t.status === 'Closed' || t.status.includes('Jira Done')) badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+        let badgeColor = "theme-card theme-text-muted border theme-border";
+        if(t.status.includes('Waiting')) badgeColor = "accent-bg-soft accent-text accent-border-soft border";
+        if(t.status === 'Done' || t.status === 'Closed' || t.status.includes('Jira Done')) badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
 
-        let prioBorder = 'border-transparent hover:border-amber-500';
+        let prioBorder = 'border-transparent hover:accent-border';
         if (t.priority === 'High') prioBorder = 'border-red-500/80 hover:border-red-400';
         if (t.priority === 'Low') prioBorder = 'border-blue-500/80 hover:border-blue-400';
 
@@ -752,14 +794,14 @@
         } catch(e) {}
 
         return `
-        <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:bg-slate-800 cursor-pointer transition-colors border-l-4 ${prioBorder} relative">
+        <div onclick="openTicket('${t.id}')" class="ticket-item p-4 hover:opacity-90 cursor-pointer transition-colors border-l-4 ${prioBorder} relative theme-panel">
           <div class="flex justify-between items-start mb-1 gap-2">
-            <span class="text-slate-100 font-bold text-sm tracking-wide line-clamp-1">${displayTitle}</span>
-            <span class="text-[10px] uppercase font-bold text-slate-500 mt-1 whitespace-nowrap">Last update: ${new Date(t.last_updated).toLocaleDateString()}</span>
+            <span class="theme-text-main font-bold text-sm tracking-wide line-clamp-1">${displayTitle}</span>
+            <span class="text-[10px] uppercase font-bold theme-text-muted mt-1 whitespace-nowrap">Last update: ${new Date(t.last_updated).toLocaleDateString()}</span>
           </div>
-          ${displaySubject ? `<p class="text-slate-300 text-sm font-semibold truncate mb-1">${displaySubject}</p>` : ''}
+          ${displaySubject ? `<p class="theme-text-muted text-sm font-semibold truncate mb-1">${displaySubject}</p>` : ''}
           <div class="flex justify-between items-center mt-2">
-            <span class="inline-block px-2.5 py-1 text-[11px] font-bold uppercase rounded border ${badgeColor} truncate max-w-[150px]" title="${t.status || 'Waiting Reply'}">${t.status || 'Waiting Reply'}</span>
+            <span class="inline-block px-2.5 py-1 text-[11px] font-bold uppercase rounded ${badgeColor} truncate max-w-[160px]" title="${t.status || 'Waiting Reply'}">${t.status || 'Waiting Reply'}</span>
             <div class="flex gap-1 shrink-0">
               ${dueBadgeHtml}
               ${needsUpdate ? `<span class="text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-500/10 px-2 py-1 rounded border border-red-500/20">Update (${freqDays}d)</span>` : ''}
@@ -818,7 +860,7 @@
       await dbClient.from('ticket_updates').delete().eq('ticket_id', currentOpenTicketId);
       await dbClient.from('tickets').delete().eq('id', currentOpenTicketId);
       closeEditTicketModal();
-      document.getElementById('workspace').innerHTML = `<div class="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center"><svg class="w-16 h-16 mb-4 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><p>Ticket deleted successfully.</p></div>`;
+      document.getElementById('workspace').innerHTML = `<div class="flex-1 flex flex-col items-center justify-center theme-text-muted p-8 text-center"><svg class="w-16 h-16 mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><p>Ticket deleted successfully.</p></div>`;
       fetchTickets();
     }
 
@@ -829,7 +871,7 @@
       if(!replyVal.trim()) return;
       
       const { data } = await dbClient.from('ticket_updates').select('content').eq('id', noteId).single();
-      const newContent = data.content + `\n\n<div class="pl-4 border-l-2 border-emerald-500/50 mt-3 text-slate-300"><span class="text-emerald-500 text-[10px] font-bold uppercase tracking-wider block mb-1">↳ Reply Thread</span>${replyVal}</div>`;
+      const newContent = data.content + `\n\n<div class="pl-4 border-l-2 border-emerald-500/50 mt-3 theme-text-main"><span class="text-emerald-500 text-[10px] font-bold uppercase tracking-wider block mb-1">↳ Reply Thread</span>${replyVal}</div>`;
       
       await dbClient.from('ticket_updates').update({ content: newContent }).eq('id', noteId);
       openTicket(currentOpenTicketId);
@@ -844,21 +886,21 @@
       const { data: updates } = await dbClient.from('ticket_updates').select('*').eq('ticket_id', id).order('created_at', { ascending: true });
       
       let updatesHtml = updates.length === 0 
-        ? `<div class="flex-1 flex items-center justify-center text-slate-600 italic">No notes yet.</div>` 
+        ? `<div class="flex-1 flex items-center justify-center theme-text-muted italic">No notes yet.</div>` 
         : `<div class="space-y-4">` + updates.map(u => `
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl group relative">
+            <div class="theme-panel border theme-border p-5 rounded-xl group relative shadow-sm">
               <div class="flex justify-between items-center mb-3">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">${new Date(u.created_at).toLocaleString()}</div>
+                <div class="text-xs font-bold uppercase tracking-wider theme-text-muted">${new Date(u.created_at).toLocaleString()}</div>
                 <div class="opacity-0 group-hover:opacity-100 transition-opacity space-x-3">
                   <button onclick="toggleReplyBox('${u.id}')" class="text-xs text-emerald-400 hover:text-emerald-300">Reply</button>
                   <button onclick="openEditNoteModal('${u.id}', '${encodeURIComponent(u.content || '')}')" class="text-xs text-blue-400 hover:text-blue-300">Edit</button>
                   <button onclick="deleteNote('${u.id}')" class="text-xs text-red-500 hover:text-red-400">Delete</button>
                 </div>
               </div>
-              <div class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed prose prose-invert max-w-none break-words overflow-hidden">${u.content}</div>
+              <div class="theme-text-main text-sm whitespace-pre-wrap leading-relaxed prose prose-invert max-w-none break-words overflow-hidden">${u.content}</div>
               
-              <div id="replyBox-${u.id}" class="hidden mt-4 pl-4 border-l-2 border-slate-700">
-                <textarea id="replyText-${u.id}" rows="2" placeholder="Type a reply to this thread..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-slate-100 focus:outline-none focus:border-amber-500 resize-none"></textarea>
+              <div id="replyBox-${u.id}" class="hidden mt-4 pl-4 border-l-2 theme-border">
+                <textarea id="replyText-${u.id}" rows="2" placeholder="Type a reply to this thread..." class="w-full theme-card border theme-border rounded-lg p-3 text-sm theme-text-main focus:outline-none accent-border resize-none"></textarea>
                 <div class="flex justify-end mt-2">
                   <button onclick="submitReply('${u.id}')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded text-xs font-bold hover:bg-emerald-500/30 transition-colors">Submit Reply</button>
                 </div>
@@ -871,8 +913,8 @@
       try {
           if (ticket.jira_id.startsWith('[')) {
               const jiras = JSON.parse(ticket.jira_id);
-              idsHtml = jiras.map(j => j.link ? `<a href="${j.link}" target="_blank" class="hover:text-blue-400 hover:underline inline-flex items-center gap-1">${j.id} <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : j.id).join('<span class="text-slate-600 mx-2">|</span>');
-              subjectsHtml = jiras.map(j => j.subj).filter(Boolean).join('<span class="text-slate-600 mx-2">|</span>') || ticket.subject || '';
+              idsHtml = jiras.map(j => j.link ? `<a href="${j.link}" target="_blank" class="hover:text-blue-400 hover:underline inline-flex items-center gap-1">${j.id} <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : j.id).join('<span class="theme-text-muted mx-2">|</span>');
+              subjectsHtml = jiras.map(j => j.subj).filter(Boolean).join('<span class="theme-text-muted mx-2">|</span>') || ticket.subject || '';
           } else {
               idsHtml = ticket.ticket_link ? `<a href="${ticket.ticket_link}" target="_blank" class="hover:text-blue-400 hover:underline inline-flex items-center gap-1">${ticket.jira_id} <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : ticket.jira_id;
               subjectsHtml = ticket.subject || '';
@@ -886,33 +928,34 @@
       try {
           if(ticket.shelf_title && ticket.shelf_title.startsWith('[')) {
               const shelves = JSON.parse(ticket.shelf_title);
-              shelfHtml = shelves.filter(s => s.title || s.link).map(s => `<a href="${s.link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold block bg-slate-800/50 px-3 py-1.5 rounded border border-slate-700/50 mb-1 w-fit">${s.title || 'Link'}</a>`).join('');
-              if(shelfHtml) shelfHtml = `<div class="mt-4"><span class="text-slate-500 text-xs uppercase font-bold block mb-2">Shelf Pages:</span>${shelfHtml}</div>`;
+              shelfHtml = shelves.filter(s => s.title || s.link).map(s => `<a href="${s.link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold block theme-card px-3 py-1.5 rounded border theme-border mb-1 w-fit">${s.title || 'Link'}</a>`).join('');
+              if(shelfHtml) shelfHtml = `<div class="mt-4"><span class="theme-text-muted text-xs uppercase font-bold block mb-2">Shelf Pages:</span>${shelfHtml}</div>`;
           } else if (ticket.shelf_title) {
-              shelfHtml = `<div class="mt-4"><span class="text-slate-500 text-xs uppercase font-bold block mb-2">Shelf Pages:</span><a href="${ticket.shelf_link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold bg-slate-800/50 px-3 py-1.5 rounded border border-slate-700/50 inline-block">${ticket.shelf_title}</a></div>`;
+              shelfHtml = `<div class="mt-4"><span class="theme-text-muted text-xs uppercase font-bold block mb-2">Shelf Pages:</span><a href="${ticket.shelf_link || '#'}" target="_blank" class="text-blue-400 hover:underline font-semibold theme-card px-3 py-1.5 rounded border theme-border inline-block">${ticket.shelf_title}</a></div>`;
           }
       } catch(e) { }
 
       let aiSummaryBlock = ticket.summary ? `
-          <div class="mt-4 p-4 accent-bg-soft accent-border-soft border rounded-lg">
+          <div class="mt-4 p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-lg">
              <div class="flex items-center gap-2 mb-1">
-               <span class="accent-text text-[10px] font-bold uppercase tracking-widest">✨ AI AUTO-SUMMARY</span>
+               <span class="text-indigo-400 text-[10px] font-bold uppercase tracking-widest">✨ AI AUTO-SUMMARY</span>
              </div>
-             <p class="text-slate-300 text-sm italic leading-relaxed">${ticket.summary}</p>
+             <p class="theme-text-main text-sm italic leading-relaxed">${ticket.summary}</p>
           </div>
       ` : '';
 
       workspace.innerHTML = `
         <div class="flex flex-col h-full w-full">
-          <div class="p-6 border-b border-slate-800 bg-slate-900 flex flex-col sm:flex-row justify-between items-start gap-4">
+          <!-- Ticket Details Meta Banner (Hidden in Full Focus View) -->
+          <div id="ticketMetaHeader" class="p-6 border-b theme-border theme-panel flex flex-col sm:flex-row justify-between items-start gap-4 transition-all duration-300">
             <div class="max-w-3xl flex-1 pr-0 sm:pr-6">
               <div class="flex gap-2 mb-3">
-                <span class="px-2 py-0.5 rounded text-xs font-bold border ${ticket.priority === 'High' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (ticket.priority === 'Low' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'accent-bg-soft accent-text accent-border-soft')}">${ticket.priority || 'Medium'} Prio</span>
-                ${ticket.due_date ? `<span class="px-2 py-0.5 rounded text-xs font-bold border bg-slate-800 text-slate-300 border-slate-700">Due: ${new Date(ticket.due_date).toLocaleDateString()}</span>` : ''}
+                <span class="px-2 py-0.5 rounded text-xs font-bold border ${ticket.priority === 'High' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (ticket.priority === 'Low' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20')}">${ticket.priority || 'Medium'} Prio</span>
+                ${ticket.due_date ? `<span class="px-2 py-0.5 rounded text-xs font-bold border theme-card theme-text-main theme-border">Due: ${new Date(ticket.due_date).toLocaleDateString()}</span>` : ''}
               </div>
               
-              <div class="text-2xl font-bold text-slate-100 flex flex-wrap items-center gap-2 mb-1">${idsHtml}</div>
-              ${subjectsHtml ? `<h3 class="text-lg font-semibold text-slate-200 mb-2">${subjectsHtml}</h3>` : ''}
+              <div class="text-2xl font-bold theme-text-main flex flex-wrap items-center gap-2 mb-1">${idsHtml}</div>
+              ${subjectsHtml ? `<h3 class="text-lg font-semibold theme-text-main mb-2">${subjectsHtml}</h3>` : ''}
               
               <div class="flex items-center gap-2 mt-2 mb-2">
                  <button id="aiSumBtn" onclick="generateAISummary('${id}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded text-xs font-bold transition-colors">✨ Auto-Summarize (AI)</button>
@@ -920,30 +963,30 @@
 
               ${aiSummaryBlock}
               ${shelfHtml}
-              ${ticket.remark ? `<div class="mt-4 accent-bg-soft accent-border-soft border rounded-lg p-3 accent-text text-sm"><span class="font-bold uppercase tracking-wider mr-2 text-xs">Remark:</span>${ticket.remark}</div>` : ''}
+              ${ticket.remark ? `<div class="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-amber-400 text-sm"><span class="font-bold uppercase tracking-wider mr-2 text-xs">Remark:</span>${ticket.remark}</div>` : ''}
             </div>
             
             <div class="flex flex-row sm:flex-col items-end space-x-3 sm:space-x-0 sm:space-y-3 shrink-0 w-full sm:w-auto">
-              <select onchange="updateStatus('${id}', this.value)" class="flex-1 sm:flex-none w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm font-medium text-slate-200 focus:outline-none focus:border-amber-500 sm:max-w-[200px]">
+              <select onchange="updateStatus('${id}', this.value)" class="flex-1 sm:flex-none w-full theme-card border theme-border rounded-lg px-4 py-2 text-sm font-medium theme-text-main focus:outline-none accent-border sm:max-w-[200px]">
                 ${ALL_STATUS_OPTIONS.map(s => `<option value="${s}" ${ticket.status === s ? 'selected' : ''}>${s}</option>`).join('')}
               </select>
-              <button onclick="openEditTicketModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-4 py-2 rounded-lg text-sm transition-colors font-medium">✏️ Edit</button>
+              <button onclick="openEditTicketModal()" class="theme-card hover:opacity-90 theme-text-main border theme-border px-4 py-2 rounded-lg text-sm transition-colors font-medium">✏️ Edit</button>
             </div>
           </div>
           
-          <div class="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950/50">
+          <div class="flex-1 overflow-y-auto p-4 sm:p-6">
             ${updatesHtml}
           </div>
 
-          <div class="p-4 sm:p-6 border-t border-slate-800 bg-slate-900">
+          <div class="p-4 sm:p-6 border-t theme-border theme-panel">
             <div class="flex items-center justify-between mb-2">
                <div class="flex gap-2">
-                 <button onclick="insertMarkdown('link')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition">🔗 Add Link</button>
-                 <button onclick="document.getElementById('imageUploader').click()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition">📎 Attach Image</button>
+                 <button onclick="insertMarkdown('link')" class="text-xs theme-card hover:opacity-80 theme-text-main px-2 py-1 rounded border theme-border transition">🔗 Add Link</button>
+                 <button onclick="document.getElementById('imageUploader').click()" class="text-xs theme-card hover:opacity-80 theme-text-main px-2 py-1 rounded border theme-border transition">📎 Attach Image</button>
                </div>
-               <span class="text-[10px] text-slate-500 italic hidden sm:block">Ctrl+V to paste images!</span>
+               <span class="text-[10px] theme-text-muted italic hidden sm:block">Ctrl+V to paste images!</span>
             </div>
-            <textarea id="newUpdateText" rows="3" placeholder="Type your notes here..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 mb-3 resize-none custom-scrollbar"></textarea>
+            <textarea id="newUpdateText" rows="3" placeholder="Type your notes here..." class="w-full theme-card border theme-border rounded-xl px-4 py-3 text-sm focus:outline-none accent-border theme-text-main mb-3 resize-none custom-scrollbar"></textarea>
             <div class="flex justify-end">
               <button onclick="addUpdate('${id}')" id="postBtn" class="accent-bg px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg w-full sm:w-auto">Post Update</button>
             </div>
