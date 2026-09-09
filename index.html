@@ -9,6 +9,8 @@
   <!-- Quill Rich Text Editor CDN -->
   <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+  <!-- EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <style>
     /* COMPLETE THEME COLOR PALETTES */
@@ -395,8 +397,13 @@
 
   <script>
     const SUPABASE_URL = "https://jikqrfseacrrekpolbsa.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imppa3FyZnNlYWNycmVrcG9sYnNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTMzMjMsImV4cCI6MjA5NTYyOTMyM30.Ca-4IFwgmQG2ePn0Sg6hb2txskW7qtAqRWSoPz99vXc"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3OiOiJzdXBhYmFzZSIsInJlZiI6Imppa3FyZnNlYWNycmVrcG9sYnNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTMzMjMsImV4cCI6MjA5NTYyOTMyM30.Ca-4IFwgmQG2ePn0Sg6hb2txskW7qtAqRWSoPz99vXc"; 
     
+    // --- EMAILJS CREDENTIALS ---
+    const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY";   // 👈 Paste your EmailJS Public Key here
+    const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";   // 👈 Paste your EmailJS Service ID here
+    const EMAILJS_TEMPLATE_ID = "template_hx0kubr"; // 👈 Hardcoded Template ID
+
     let dbClient = null;
     let allTickets = [];
     let currentTab = 'Waiting Reply from Stakeholders';
@@ -485,7 +492,7 @@
       }
     }
 
-    // --- DEFAULT TEMPLATES DATA WITH HTML FORMATTING ---
+    // --- DEFAULT TEMPLATES DATA ---
     const DEFAULT_TEMPLATES = [
       {
         id: 'tpl-1',
@@ -509,6 +516,70 @@
       }
     ];
 
+    // --- AUTOMATED GMAIL REMINDERS LOGIC ---
+    function initEmailJS() {
+      if (EMAILJS_PUBLIC_KEY && EMAILJS_PUBLIC_KEY !== "YOUR_PUBLIC_KEY" && window.emailjs) {
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+      }
+    }
+
+    async function checkAndSendEmailReminders() {
+      if (!EMAILJS_PUBLIC_KEY || EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY" || !EMAILJS_SERVICE_ID || EMAILJS_SERVICE_ID === "YOUR_SERVICE_ID" || !window.emailjs) return;
+
+      const now = new Date();
+      const sentHistory = JSON.parse(localStorage.getItem('sent_email_reminders') || '{}');
+
+      for (const t of allTickets) {
+        const isFinished = t.status === 'Done' || t.status === 'Closed' || (t.status && t.status.includes('Jira Done')) || t.status === 'Rejected';
+        if (isFinished) continue;
+
+        let jiraDisplay = t.jira_id;
+        try {
+          if (typeof t.jira_id === 'string' && t.jira_id.startsWith('[')) {
+            jiraDisplay = JSON.parse(t.jira_id).map(j => j.id).join(', ');
+          }
+        } catch(e) {}
+
+        // 1. Check 48-Hour Deadline Reminder
+        if (t.due_date) {
+          const hoursToDue = (new Date(t.due_date) - now) / (1000 * 60 * 60);
+          const deadlineKey = `due_${t.id}_${t.due_date}`;
+
+          if (hoursToDue > 0 && hoursToDue <= 48 && !sentHistory[deadlineKey]) {
+            await sendGmailAlert(jiraDisplay, t.subject || 'N/A', '48-Hour Deadline Approaching', t.status, t.due_date);
+            sentHistory[deadlineKey] = true;
+          }
+        }
+
+        // 2. Check Update Alert Days Overdue Reminder
+        const freqDays = t.update_frequency_days || 7;
+        const daysSinceUpdate = (now - new Date(t.last_updated)) / (1000 * 60 * 60 * 24);
+        const updateKey = `update_${t.id}_${t.last_updated}`;
+
+        if (daysSinceUpdate > freqDays && !sentHistory[updateKey]) {
+          await sendGmailAlert(jiraDisplay, t.subject || 'N/A', `Update Overdue (${freqDays} Alert Days Exceeded)`, t.status, t.due_date || 'N/A');
+          sentHistory[updateKey] = true;
+        }
+      }
+
+      localStorage.setItem('sent_email_reminders', JSON.stringify(sentHistory));
+    }
+
+    async function sendGmailAlert(ticketId, subject, alertType, status, dueDate) {
+      try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          ticket_id: ticketId,
+          ticket_subject: subject,
+          alert_type: alertType,
+          status: status,
+          due_date: dueDate
+        });
+        console.log(`Gmail reminder sent for ${ticketId} (${alertType})`);
+      } catch (err) {
+        console.error("EmailJS Error:", err);
+      }
+    }
+
     // --- AUTHENTICATION LOGIC ---
     async function checkSession() {
       const { data: { session } } = await dbClient.auth.getSession();
@@ -528,42 +599,6 @@
     async function handleLogout() { await dbClient.auth.signOut(); showLogin(); }
     function showApp() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appWorkspace').classList.remove('hidden'); fetchTickets(); }
     function showLogin() { document.getElementById('appWorkspace').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
-
-    // --- UI HELPERS ---
-    function addDynamicRow(containerId, type, data = {}) {
-        const container = document.getElementById(containerId);
-        const row = document.createElement('div');
-        row.className = "flex gap-2 items-center theme-panel p-2 rounded border theme-border";
-        if(type === 'jira') {
-            row.innerHTML = `
-                <input type="text" placeholder="ID (e.g. OPPR-123)" value="${data.id || ''}" class="dyn-id w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <input type="text" placeholder="Subject" value="${data.subj || ''}" class="dyn-subj w-2/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/4 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
-            `;
-        } else {
-            row.innerHTML = `
-                <input type="text" placeholder="Title" value="${data.title || ''}" class="dyn-title w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <input type="url" placeholder="Link (https://)" value="${data.link || ''}" class="dyn-link w-1/2 theme-card border theme-border rounded px-2 py-1 text-xs focus:border-amber-500 theme-text-main">
-                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-400 font-bold px-1 text-sm">×</button>
-            `;
-        }
-        container.appendChild(row);
-    }
-
-    function extractDynamicData(containerId, type) {
-        const container = document.getElementById(containerId);
-        const rows = container.children;
-        const results = [];
-        for(let i=0; i<rows.length; i++) {
-            if(type === 'jira') {
-                results.push({ id: rows[i].querySelector('.dyn-id').value, subj: rows[i].querySelector('.dyn-subj').value, link: rows[i].querySelector('.dyn-link').value });
-            } else {
-                results.push({ title: rows[i].querySelector('.dyn-title').value, link: rows[i].querySelector('.dyn-link').value });
-            }
-        }
-        return JSON.stringify(results);
-    }
 
     // --- TEMPLATES LOGIC ---
     function getTemplates() {
@@ -597,7 +632,6 @@
         </div>
       `).join('');
 
-      // Initialize Quill Editor for each Template Space
       tpls.forEach(t => {
         const q = createQuillEditor('#editor-tpl-' + t.id, 'Type template content...', t.content);
         quillInstances['templates'][t.id] = q;
@@ -660,7 +694,6 @@
         ]);
         alert("Formatted template copied to clipboard!");
       } catch(e) {
-        // Fallback for clipboard write API restriction
         const tempDiv = document.createElement('div');
         tempDiv.contentEditable = true;
         tempDiv.style.position = 'fixed';
@@ -821,6 +854,7 @@
       }
       allTickets = data || [];
       renderTickets();
+      checkAndSendEmailReminders();
     }
 
     function renderTickets() {
@@ -1103,7 +1137,6 @@
         </div>
       `;
 
-      // Instantiate Quill Editor for Post Update
       quillInstances['postUpdate'] = createQuillEditor('#postUpdateEditor', 'Type your notes here...');
     }
 
@@ -1123,6 +1156,7 @@
 
     window.onload = () => {
       initTheme();
+      initEmailJS();
       if(SUPABASE_ANON_KEY) {
         dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         dbClient.auth.onAuthStateChange((event, session) => { if (event === 'SIGNED_IN') showApp(); if (event === 'SIGNED_OUT') showLogin(); });
