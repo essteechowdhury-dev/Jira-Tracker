@@ -366,7 +366,7 @@
     let currentSort = 'last_updated';
     let isFocusMode = false;
     
-    // Comprehensive Status Mapping
+    // Comprehensive Status Mapping with Bulletproof Fallback
     const STATUS_MAP = {
       'Waiting Reply from Stakeholders': [
         'Waiting Reply from Stakeholders', 
@@ -507,43 +507,8 @@
         }
         return JSON.stringify(results);
     }
-    
-    function handleImagePaste(e) {
-      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-      for (let index in items) {
-        const item = items[index];
-        if (item.kind === 'file' && item.type.includes('image/')) {
-          e.preventDefault();
-          const blob = item.getAsFile();
-          readBlobToNote(blob, e.target);
-        }
-      }
-    }
 
-    function handleFileUpload(e) {
-      const file = e.target.files[0];
-      if(!file) return;
-      const txt = document.getElementById('newUpdateText');
-      readBlobToNote(file, txt);
-      e.target.value = ''; 
-    }
-
-    function readBlobToNote(blob, textElement) {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        const base64 = event.target.result;
-        textElement.value = textElement.value.substring(0, textElement.selectionStart) + `\n<img src="${base64}" class="max-w-md rounded-lg mt-2 border theme-border">\n` + textElement.value.substring(textElement.selectionEnd);
-      };
-      reader.readAsDataURL(blob);
-    }
-
-    function insertMarkdown(type) {
-      const textarea = document.getElementById('newUpdateText');
-      if (type === 'link') textarea.value += ` [Link Text](https://...)`;
-      textarea.focus();
-    }
-
-    // --- TEMPLATES LOGIC (WITH CLIPBOARD IMAGE PASTE) ---
+    // --- TEMPLATES LOGIC ---
     function getTemplates() {
       const stored = localStorage.getItem('saved_templates');
       if(!stored) {
@@ -575,7 +540,6 @@
         </div>
       `).join('');
 
-      // Add Paste Handlers to all template textareas for Image Paste support
       document.querySelectorAll('.tpl-area').forEach(el => {
         el.addEventListener('paste', handleImagePaste);
       });
@@ -643,7 +607,6 @@
         const notesText = (updates || []).map(u => u.content.replace(/<img[^>]*>/g, '')).join("\n\n");
         const promptText = `Summarize these Jira timeline notes into 1 or 2 concise, clear executive sentences:\n\n${notesText || ticket.subject || 'No notes available.'}`;
 
-        // Connects to Gemini 3.6 Flash
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -741,9 +704,14 @@
       const searchTerm = document.getElementById('searchBar').value.toLowerCase();
       
       let filtered = allTickets.filter(t => {
-        const status = t.status || 'Waiting Reply from Stakeholders'; 
+        let status = t.status || 'Waiting Reply from Stakeholders';
+        
+        // Bulletproof Tab Mapping with Fallback to Stakeholders
+        let mappedTab = Object.keys(STATUS_MAP).find(tab => STATUS_MAP[tab].includes(status));
+        if (!mappedTab) mappedTab = 'Waiting Reply from Stakeholders';
+
         const searchString = `${t.jira_id} ${t.subject || ''} ${t.summary || ''} ${t.shelf_title || ''}`.toLowerCase();
-        return STATUS_MAP[currentTab] && STATUS_MAP[currentTab].includes(status) && searchString.includes(searchTerm);
+        return mappedTab === currentTab && searchString.includes(searchTerm);
       });
 
       filtered.sort((a, b) => {
@@ -760,19 +728,19 @@
         return 0;
       });
 
-      if (filtered.length === 0) { list.innerHTML = `<p class="theme-text-muted text-sm p-4 text-center">No tickets found.</p>`; return; }
+      if (filtered.length === 0) { list.innerHTML = `<p class="theme-text-muted text-sm p-4 text-center">No tickets found in this tab.</p>`; return; }
       const now = new Date(); 
 
       list.innerHTML = filtered.map(t => {
         let badgeColor = "theme-card theme-text-muted border theme-border";
-        if(t.status.includes('Waiting')) badgeColor = "accent-bg-soft accent-text accent-border-soft border";
-        if(t.status === 'Done' || t.status === 'Closed' || t.status.includes('Jira Done')) badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        if(t.status && t.status.includes('Waiting')) badgeColor = "accent-bg-soft accent-text accent-border border";
+        if(t.status === 'Done' || t.status === 'Closed' || (t.status && t.status.includes('Jira Done'))) badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
 
         let prioBorder = 'border-transparent hover:accent-border';
         if (t.priority === 'High') prioBorder = 'border-red-500/80 hover:border-red-400';
         if (t.priority === 'Low') prioBorder = 'border-blue-500/80 hover:border-blue-400';
 
-        const isFinished = t.status === 'Done' || t.status === 'Closed' || t.status.includes('Jira Done') || t.status === 'Rejected';
+        const isFinished = t.status === 'Done' || t.status === 'Closed' || (t.status && t.status.includes('Jira Done')) || t.status === 'Rejected';
         const freqDays = t.update_frequency_days || 7;
         const needsUpdate = ((now - new Date(t.last_updated)) / (1000 * 60 * 60 * 24)) > freqDays && !isFinished;
 
@@ -947,7 +915,7 @@
       workspace.innerHTML = `
         <div class="flex flex-col h-full w-full">
           <!-- Ticket Details Meta Banner (Hidden in Full Focus View) -->
-          <div id="ticketMetaHeader" class="p-6 border-b theme-border theme-panel flex flex-col sm:flex-row justify-between items-start gap-4 transition-all duration-300">
+          <div id="ticketMetaHeader" class="${isFocusMode ? 'hidden' : ''} p-6 border-b theme-border theme-panel flex flex-col sm:flex-row justify-between items-start gap-4 transition-all duration-300">
             <div class="max-w-3xl flex-1 pr-0 sm:pr-6">
               <div class="flex gap-2 mb-3">
                 <span class="px-2 py-0.5 rounded text-xs font-bold border ${ticket.priority === 'High' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (ticket.priority === 'Low' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20')}">${ticket.priority || 'Medium'} Prio</span>
